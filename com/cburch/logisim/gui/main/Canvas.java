@@ -25,6 +25,7 @@ import com.cburch.logisim.circuit.CircuitListener;
 import com.cburch.logisim.circuit.CircuitState;
 import com.cburch.logisim.circuit.SimulatorEvent;
 import com.cburch.logisim.circuit.SimulatorListener;
+import com.cburch.logisim.circuit.SubcircuitFactory;
 import com.cburch.logisim.circuit.WidthIncompatibilityData;
 import com.cburch.logisim.circuit.WireSet;
 import com.cburch.logisim.comp.Component;
@@ -267,7 +268,14 @@ public class Canvas extends JPanel
 		public void libraryChanged(LibraryEvent event) {
 			if (event.getAction() == LibraryEvent.REMOVE_TOOL) {
 				Object t = event.getData();
-				if (t instanceof AddTool) t = ((AddTool) t).getFactory();
+				Circuit circ = null;
+				if (t instanceof AddTool) {
+					t = ((AddTool) t).getFactory();
+					if (t instanceof SubcircuitFactory) {
+						circ = ((SubcircuitFactory) t).getSubcircuit();
+					}
+				}
+				
 				if (t == proj.getCurrentCircuit() && t != null) {
 					proj.setCurrentCircuit(proj.getLogisimFile().getMainCircuit());
 				}
@@ -284,10 +292,10 @@ public class Canvas extends JPanel
 					proj.setTool(next);
 				}
 				
-				if (t instanceof Circuit) {
+				if (circ != null) {
 					CircuitState state = getCircuitState();
 					CircuitState last = state;
-					while (state != null && state.getCircuit() != t) {
+					while (state != null && state.getCircuit() != circ) {
 						last = state;
 						state = state.getParentState();
 					}
@@ -358,7 +366,6 @@ public class Canvas extends JPanel
 				}
 				f = ((Double) val).doubleValue();
 				zoomFactor = f;
-				painter.updateGridImage(zoomFactor);
 				computeSize();
 				repaint();
 				if (parent != null) {
@@ -568,7 +575,6 @@ public class Canvas extends JPanel
 		zoomFactor = options.getValue(Options.zoom_attr).doubleValue();
 		showTips = options.getValue(Options.showtips_attr).booleanValue();
 		setToolTipText(showTips ? "" : null);
-		painter.updateGridImage(zoomFactor);
 
 		proj.getSimulator().removeSimulatorListener(myProjectListener);
 		proj.getSimulator().addSimulatorListener(myProjectListener);
@@ -612,6 +618,10 @@ public class Canvas extends JPanel
 	}
 
 	public boolean getShowHalo() { return painter.getShowHalo(); }
+
+	GridPainter getGridPainter() {
+		return painter.getGridPainter();
+	}
 	
 	Tool getDragTool() { return drag_tool; }
 	

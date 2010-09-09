@@ -9,6 +9,9 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
 import com.cburch.logisim.circuit.Circuit;
 import com.cburch.logisim.circuit.CircuitState;
 import com.cburch.logisim.circuit.Simulator;
@@ -143,8 +146,8 @@ class MenuListener {
 	}
 
 	class ProjectMenuListener implements ProjectListener, LibraryListener,
-				ActionListener {
-		void register() {
+				ActionListener, ChangeListener {
+		void register(MainPanel mainPanel) {
 			Project proj = frame.getProject();
 			if (proj == null) {
 				return;
@@ -152,6 +155,7 @@ class MenuListener {
 
 			proj.addProjectListener(this);
 			proj.addLibraryListener(this);
+			mainPanel.addChangeListener(this);
 			
 			projbar.setActionListener(this);
 			menubar.addActionListener(LogisimMenuBar.ADD_CIRCUIT, this);
@@ -159,6 +163,8 @@ class MenuListener {
 			menubar.addActionListener(LogisimMenuBar.MOVE_CIRCUIT_DOWN, this);
 			menubar.addActionListener(LogisimMenuBar.SET_MAIN_CIRCUIT, this);
 			menubar.addActionListener(LogisimMenuBar.REMOVE_CIRCUIT, this);
+			menubar.addActionListener(LogisimMenuBar.EDIT_LAYOUT, this);
+			menubar.addActionListener(LogisimMenuBar.EDIT_APPEARANCE, this);
 			menubar.addActionListener(LogisimMenuBar.ANALYZE_CIRCUIT, this);
 			menubar.addActionListener(LogisimMenuBar.CIRCUIT_STATS, this);
 			
@@ -184,10 +190,6 @@ class MenuListener {
 			Circuit cur = proj == null ? null : proj.getCurrentCircuit();
 			if (src == LogisimMenuBar.ADD_CIRCUIT) {
 				ProjectCircuitActions.doAddCircuit(proj);
-			} else if (src == LogisimMenuBar.ANALYZE_CIRCUIT) {
-				ProjectCircuitActions.doAnalyze(proj, cur);
-			} else if (src == LogisimMenuBar.CIRCUIT_STATS) {
-				StatisticsDialog.show(frame, proj.getLogisimFile(), cur);
 			} else if (src == LogisimMenuBar.MOVE_CIRCUIT_UP) {
 				ProjectCircuitActions.doMoveCircuit(proj, cur, -1);
 			} else if (src == LogisimMenuBar.MOVE_CIRCUIT_DOWN) {
@@ -196,6 +198,14 @@ class MenuListener {
 				ProjectCircuitActions.doSetAsMainCircuit(proj, cur);
 			} else if (src == LogisimMenuBar.REMOVE_CIRCUIT) {
 				ProjectCircuitActions.doRemoveCircuit(proj, cur);
+			} else if (src == LogisimMenuBar.EDIT_LAYOUT) {
+				frame.getMainPanel().setView(MainPanel.LAYOUT);
+			} else if (src == LogisimMenuBar.EDIT_APPEARANCE) {
+				frame.getMainPanel().setView(MainPanel.APPEARANCE);
+			} else if (src == LogisimMenuBar.ANALYZE_CIRCUIT) {
+				ProjectCircuitActions.doAnalyze(proj, cur);
+			} else if (src == LogisimMenuBar.CIRCUIT_STATS) {
+				StatisticsDialog.show(frame, proj.getLogisimFile(), cur);
 			}
 		}
 		
@@ -207,6 +217,7 @@ class MenuListener {
 			boolean canMoveUp = false;
 			boolean canMoveDown = false;
 			boolean canRemove = false;
+			String view = frame.getMainPanel().getView();
 			if (isProjectCircuit) {
 				List<AddTool> tools = proj.getLogisimFile().getTools();
 				Object firstTool = tools.get(0);
@@ -221,8 +232,6 @@ class MenuListener {
 			}
 			
 			menubar.setEnabled(LogisimMenuBar.ADD_CIRCUIT, true);
-			menubar.setEnabled(LogisimMenuBar.ANALYZE_CIRCUIT, true);
-			menubar.setEnabled(LogisimMenuBar.CIRCUIT_STATS, true);
 			menubar.setEnabled(LogisimMenuBar.MOVE_CIRCUIT_UP, canMoveUp);
 			menubar.setEnabled(LogisimMenuBar.MOVE_CIRCUIT_DOWN, canMoveDown);
 			menubar.setEnabled(LogisimMenuBar.SET_MAIN_CIRCUIT, canSetMain);
@@ -231,6 +240,14 @@ class MenuListener {
 			projbar.setEnabled(LogisimMenuBar.MOVE_CIRCUIT_UP, canMoveUp);
 			projbar.setEnabled(LogisimMenuBar.MOVE_CIRCUIT_DOWN, canMoveDown);
 			projbar.setEnabled(LogisimMenuBar.REMOVE_CIRCUIT, canRemove);
+			menubar.setEnabled(LogisimMenuBar.EDIT_LAYOUT, !view.equals(MainPanel.LAYOUT));
+			menubar.setEnabled(LogisimMenuBar.EDIT_APPEARANCE, !view.equals(MainPanel.APPEARANCE));
+			menubar.setEnabled(LogisimMenuBar.ANALYZE_CIRCUIT, true);
+			menubar.setEnabled(LogisimMenuBar.CIRCUIT_STATS, true);
+		}
+
+		public void stateChanged(ChangeEvent e) {
+			computeEnabled();
 		}
 	}
 
@@ -269,10 +286,10 @@ class MenuListener {
 		this.projbar = projectToolbar;
 	}
 	
-	public void register() {
+	public void register(MainPanel mainPanel) {
 		fileListener.register();
 		editListener.register();
-		projectListener.register();
+		projectListener.register(mainPanel);
 		simulateListener.register();
 	}
 

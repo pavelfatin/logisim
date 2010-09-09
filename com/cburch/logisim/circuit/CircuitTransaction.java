@@ -24,8 +24,15 @@ public abstract class CircuitTransaction {
 			
 			Collection<Circuit> modified = mutator.getModifiedCircuits();
 			for (Circuit circuit : modified) {
-				WireRepair repair = new WireRepair(circuit);
-				repair.run(mutator);
+				CircuitMutatorImpl circMutator = circuit.getLocker().getMutator();
+				if (circMutator == mutator) {
+					WireRepair repair = new WireRepair(circuit);
+					repair.run(mutator);
+				} else {
+					// this is a transaction executed within a transaction -
+					// wait to repair wires until overall transaction is done
+					circMutator.markModified(circuit);
+				}
 			}
 			result = new CircuitTransactionResult(mutator);
 			for (Circuit circuit : result.getModifiedCircuits()) {

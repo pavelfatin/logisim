@@ -14,7 +14,10 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.WindowConstants;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
+import com.cburch.draw.toolbar.Toolbar;
 import com.cburch.logisim.circuit.Circuit;
 import com.cburch.logisim.circuit.CircuitEvent;
 import com.cburch.logisim.circuit.CircuitListener;
@@ -27,6 +30,7 @@ import com.cburch.logisim.data.Direction;
 import com.cburch.logisim.file.LibraryEvent;
 import com.cburch.logisim.file.LibraryListener;
 import com.cburch.logisim.file.Options;
+import com.cburch.logisim.gui.appear.AppearanceEditor;
 import com.cburch.logisim.gui.menu.LogisimMenuBar;
 import com.cburch.logisim.proj.Project;
 import com.cburch.logisim.proj.ProjectActions;
@@ -45,7 +49,7 @@ public class Frame extends JFrame
 		implements LocaleListener {
 	class MyProjectListener
 			implements ProjectListener, LibraryListener, CircuitListener,
-				AttributeListener {
+				AttributeListener, ChangeListener {
 		public void projectChanged(ProjectEvent event) {
 			int action = event.getAction();
 
@@ -63,6 +67,8 @@ public class Frame extends JFrame
 				attrs.addAttributeListener(this);
 				placeToolbar(attrs.getValue(Options.ATTR_TOOLBAR_LOC));
 			} else if (action == ProjectEvent.ACTION_SET_CURRENT) {
+				mainPanel.setView(MainPanel.LAYOUT);
+				appearance.setCircuit(proj, proj.getCurrentCircuit());
 				viewAttributes(proj.getTool());
 				computeTitle();
 			} else if (action == ProjectEvent.ACTION_SET_TOOL) {
@@ -96,20 +102,34 @@ public class Frame extends JFrame
 				placeToolbar(e.getValue());
 			}
 		}
+
+		public void stateChanged(ChangeEvent e) {
+			if (e.getSource() == mainPanel) {
+				if (MainPanel.APPEARANCE.equals(mainPanel.getView())) {
+					toolbar.setToolbarModel(appearance.getToolbarModel());
+					attrTable.setAttributeSet(appearance.getAttributeSet(),
+							appearance.getAttributeManager(attrTable));
+					zoom.setZoomModel(appearance.getZoomModel());
+				} else {
+					toolbar.setToolbarModel(layoutToolbarModel);
+					zoom.setZoomModel(projectZoomModel);
+				}
+			}
+		}
 	}
 
 	class MyWindowListener extends WindowAdapter {
 		@Override
 		public void windowClosing(WindowEvent e) {
 			if (confirmClose(Strings.get("confirmCloseTitle"))) {
-				canvas.closeCanvas();
+				layoutCanvas.closeCanvas();
 				Frame.this.dispose();
 			}
 		}
 
 		@Override
 		public void windowOpened(WindowEvent e) {
-			canvas.computeSize();
+			layoutCanvas.computeSize();
 		}
 	}
 
@@ -145,11 +165,16 @@ public class Frame extends JFrame
 	private LogisimMenuBar  menubar;
 	private MenuListener    menuListener;
 	private Toolbar         toolbar;
-	private Canvas          canvas;
+	private MainPanel       mainPanel;
+	
+	private LayoutToolbarModel layoutToolbarModel;
+	private Canvas          layoutCanvas;
 	private JPanel          canvasPanel;
+	private AppearanceEditor appearance;
 	private ProjectToolbar  projectToolbar;
 	private Explorer        explorer;
 	private AttributeTable  attrTable;
+	private ZoomModel       projectZoomModel;
 	private ZoomControl     zoom;
 	private MyProjectListener myProjectListener = new MyProjectListener();
 
@@ -173,27 +198,38 @@ public class Frame extends JFrame
 		menubar = new LogisimMenuBar(this, proj);
 		setJMenuBar(menubar);
 		menuListener = new MenuListener(this, menubar, projectToolbar);
-		menuListener.register();
 
 		// set up the content-bearing components
-		toolbar = new Toolbar(proj);
+		layoutToolbarModel = new LayoutToolbarModel(this, proj);
+		toolbar = new Toolbar(layoutToolbarModel);
 		explorer = new Explorer(proj);
 		explorer.setListener(new ExplorerManip(proj, explorer));
 		canvasPanel = new JPanel(new BorderLayout());
-		canvas = new Canvas(proj);
-		zoom = new ZoomControl(canvas);
+		layoutCanvas = new Canvas(proj);
+		appearance = new AppearanceEditor();
+		appearance.setCircuit(proj, proj.getCurrentCircuit());
+		projectZoomModel = new ProjectZoomModel(proj);
+		layoutCanvas.getGridPainter().setZoomModel(projectZoomModel);
+		zoom = new ZoomControl(projectZoomModel);
 		attrTable = new AttributeTable(this);
 
 		// set up the contents, split down the middle, with the canvas
 		// on the right and a split pane on the left containing the
 		// explorer and attribute values.
-		JScrollPane canvasPane = new JScrollPane(canvas);
+		JScrollPane canvasPane = new JScrollPane(layoutCanvas);
 		if (MacCompatibility.mrjVersion >= 0.0) {
 			canvasPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 			canvasPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		}
-		canvas.setScrollPane(canvasPane);
-		canvasPanel.add(canvasPane, BorderLayout.CENTER);
+		layoutCanvas.setScrollPane(canvasPane);
+		
+		// set up the central area
+		mainPanel = new MainPanel();
+		mainPanel.addChangeListener(myProjectListener);
+		mainPanel.addView(MainPanel.LAYOUT, canvasPane);
+		mainPanel.addView(MainPanel.APPEARANCE, appearance);
+		mainPanel.setView(MainPanel.LAYOUT);
+		canvasPanel.add(mainPanel, BorderLayout.CENTER);
 		
 		JPanel explPanel = new JPanel(new BorderLayout());
 		explPanel.add(projectToolbar, BorderLayout.NORTH);
@@ -212,10 +248,8 @@ public class Frame extends JFrame
 		computeTitle();
 
 		this.setSize(640, 480);
-		toolbar.registerShortcuts(canvas);
-		toolbar.registerShortcuts(toolbar);
-		toolbar.registerShortcuts(explorer);
-		toolbar.registerShortcuts(attrTable);
+		menuListener.register(mainPanel);
+		KeyboardToolSelection.register(toolbar);
 
 		if (proj.getTool() == null) {
 			proj.setTool(proj.getOptions().getToolbarData().getFirstTool());
@@ -254,26 +288,30 @@ public class Frame extends JFrame
 	public void viewComponentAttributes(Circuit circ, Component comp) {
 		if (comp == null) {
 			attrTable.setAttributeSet(null, null);
-			canvas.setHaloedComponent(null, null);
+			layoutCanvas.setHaloedComponent(null, null);
 		} else {
 			attrTable.setAttributeSet(comp.getAttributeSet(),
 				new ComponentAttributeListener(proj, circ, comp));
-			canvas.setHaloedComponent(circ, comp);
+			layoutCanvas.setHaloedComponent(circ, comp);
 		}
-		toolbar.setHaloedTool(null);
+		layoutToolbarModel.setHaloedTool(null);
 		explorer.setHaloedTool(null);
 	}
 
 	boolean getShowHalo() {
-		return canvas.getShowHalo();
+		return layoutCanvas.getShowHalo();
 	}
 
 	public AttributeTable getAttributeTable() {
 		return attrTable;
 	}
+	
+	MainPanel getMainPanel() {
+		return mainPanel;
+	}
 
 	public Canvas getCanvas() {
-		return canvas;
+		return layoutCanvas;
 	}
 
 	private void computeTitle() {
@@ -314,13 +352,13 @@ public class Frame extends JFrame
 			attrTable.setAttributeSet(newAttrs, newTool.getAttributeTableListener(proj));
 		}
 		if (newAttrs != null && newAttrs.getAttributes().size() > 0) {
-			toolbar.setHaloedTool(newTool);
+			layoutToolbarModel.setHaloedTool(newTool);
 			explorer.setHaloedTool(newTool);
 		} else {
-			toolbar.setHaloedTool(null);
+			layoutToolbarModel.setHaloedTool(null);
 			explorer.setHaloedTool(null);
 		}
-		canvas.setHaloedComponent(null, null);
+		layoutCanvas.setHaloedComponent(null, null);
 	}
 
 	public void localeChanged() {

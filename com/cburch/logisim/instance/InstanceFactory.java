@@ -70,13 +70,13 @@ public abstract class InstanceFactory extends AbstractComponentFactory {
 	}
 	
 	@Override
-	public final String getName() {
+	public String getName() {
 		return name;
 	}
 	
 	@Override
 	public String getDisplayName() {
-		return displayName.get();
+		return getDisplayGetter().get();
 	}
 	
 	@Override

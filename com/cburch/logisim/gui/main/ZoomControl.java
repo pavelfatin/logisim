@@ -7,33 +7,23 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 import javax.swing.AbstractSpinnerModel;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 
-import com.cburch.logisim.data.AttributeEvent;
-import com.cburch.logisim.data.AttributeListener;
-import com.cburch.logisim.data.AttributeSet;
-import com.cburch.logisim.file.LogisimFile;
-import com.cburch.logisim.file.Options;
-import com.cburch.logisim.proj.ProjectEvent;
-import com.cburch.logisim.proj.ProjectListener;
-
 class ZoomControl extends JPanel {
-	private class Model extends AbstractSpinnerModel
-			implements ActionListener, ProjectListener, AttributeListener {
-		private double[] choices = new double[] { 20, 50, 75, 100, 133, 150, 200 };
-
+	private class SpinnerModel extends AbstractSpinnerModel
+			implements PropertyChangeListener {
 		public Object getNextValue() {
-			Options opts = canvas.getProject().getOptions();
-			Double zoom = opts.getAttributeSet().getValue(Options.zoom_attr);
-			double factor = zoom.doubleValue() * 100.0 * 1.001;
+			double zoom = model.getZoomFactor();
+			double[] choices = model.getZoomOptions();
+			double factor = zoom * 100.0 * 1.001;
 			for (int i = 0; i < choices.length; i++) {
 				if (choices[i] > factor) return toString(choices[i]);
 			}
@@ -41,9 +31,9 @@ class ZoomControl extends JPanel {
 		}
 
 		public Object getPreviousValue() {
-			Options opts = canvas.getProject().getOptions();
-			Double zoom = opts.getAttributeSet().getValue(Options.zoom_attr);
-			double factor = zoom.doubleValue() * 100.0 * 0.999;
+			double zoom = model.getZoomFactor();
+			double[] choices = model.getZoomOptions();
+			double factor = zoom * 100.0 * 0.999;
 			for (int i = choices.length - 1; i >= 0; i--) {
 				if (choices[i] < factor) return toString(choices[i]);
 			}
@@ -51,9 +41,8 @@ class ZoomControl extends JPanel {
 		}
 
 		public Object getValue() {
-			Options opts = canvas.getProject().getOptions();
-			Double zoom = opts.getAttributeSet().getValue(Options.zoom_attr);
-			return toString(zoom.doubleValue() * 100.0);
+			double zoom = model.getZoomFactor();
+			return toString(zoom * 100.0);
 		}
 		
 		private String toString(double factor) {
@@ -72,50 +61,19 @@ class ZoomControl extends JPanel {
 				if (s.endsWith("%")) s = s.substring(0, s.length() - 1);
 				s = s.trim();
 				try {
-					double rawVal = Double.parseDouble(s) / 100.0;
-					Double val = new Double(rawVal);
-					Options opts = canvas.getProject().getOptions();
-					AttributeSet attrs = opts.getAttributeSet();
-					Double old = attrs.getValue(Options.zoom_attr);
-					if (!val.equals(old)) {
-						attrs.setValue(Options.zoom_attr, val);
-					}
+					double zoom = Double.parseDouble(s) / 100.0;
+					model.setZoomFactor(zoom);
 				} catch (NumberFormatException e) { }
 			}
 		}
-		
-		public void actionPerformed(ActionEvent event) {
-		}
 
-		public void projectChanged(ProjectEvent event) {
-			if (event.getAction() == ProjectEvent.ACTION_SET_FILE) {
-				Object oldFile = event.getOldData();
-				if (oldFile instanceof LogisimFile) {
-					Options opts = ((LogisimFile) oldFile).getOptions();
-					opts.getAttributeSet().removeAttributeListener(this);
-				}
-				Object newFile = event.getData();
-				if (newFile instanceof LogisimFile) {
-					Options opts = ((LogisimFile) newFile).getOptions();
-					opts.getAttributeSet().addAttributeListener(this);
-				}
-				fireStateChanged();
-			}
-		}
-
-		public void attributeListChanged(AttributeEvent e) {}
-
-		public void attributeValueChanged(AttributeEvent e) {
-			Object attr = e.getAttribute();
-			if (attr == Options.zoom_attr) {
-				fireStateChanged();
-			} else if (attr == Options.showgrid_attr) {
-				grid.update();
-			}
+		public void propertyChange(PropertyChangeEvent evt) {
+			fireStateChanged();
 		}
 	}
 	
-	private class GridIcon extends JComponent implements MouseListener {
+	private class GridIcon extends JComponent
+			implements MouseListener, PropertyChangeListener {
 		boolean state = true;
 		
 		public GridIcon() {
@@ -130,11 +88,9 @@ class ZoomControl extends JPanel {
 		}
 
 		private void update() {
-			Options opts = canvas.getProject().getOptions();
-			Object o = opts.getAttributeSet().getValue(Options.showgrid_attr);
-			boolean b = !(o instanceof Boolean) || ((Boolean) o).booleanValue();
-			if (b != state) {
-				state = b;
+			boolean grid = model.getShowGrid();
+			if (grid != state) {
+				state = grid;
 				repaint();
 			}
 		}
@@ -160,36 +116,51 @@ class ZoomControl extends JPanel {
 		public void mouseReleased(MouseEvent e) { }
 
 		public void mousePressed(MouseEvent e) {
-			Options opts = canvas.getProject().getOptions();
-			Object val = opts.getAttributeSet().getValue(Options.showgrid_attr);
-			if (val instanceof Boolean) {
-				Boolean o = Boolean.valueOf(!((Boolean) val).booleanValue());
-				opts.getAttributeSet().setValue(Options.showgrid_attr, o);
-			}
+			model.setShowGrid(!state);
+		}
+
+		public void propertyChange(PropertyChangeEvent evt) {
+			update();
 		}
 	}
 	
-	private Canvas canvas;
+	private ZoomModel model;
+	private JSpinner spinner;
+	private SpinnerModel spinnerModel;
 	private GridIcon grid;
 	
-	public ZoomControl(Canvas canvas) {
+	public ZoomControl(ZoomModel model) {
 		super(new BorderLayout());
-		this.canvas = canvas;
+		this.model = model;
 		
-		Model model = new Model();
-		JSpinner spinner = new JSpinner();
-		spinner.setModel(model);
+		spinnerModel = new SpinnerModel();
+		spinner = new JSpinner();
+		spinner.setModel(spinnerModel);
 		this.add(spinner, BorderLayout.CENTER);
 		
 		grid = new GridIcon();
 		this.add(grid, BorderLayout.EAST);
 		grid.update();
-
-		canvas.getProject().addProjectListener(model);
-		LogisimFile file = canvas.getProject().getLogisimFile();
-		if (file != null) {
-			file.getOptions().getAttributeSet().addAttributeListener(model);
-		}
 		
+		model.addPropertyChangeListener(ZoomModel.SHOW_GRID, grid);
+		model.addPropertyChangeListener(ZoomModel.ZOOM, spinnerModel);
+	}
+	
+	public void setZoomModel(ZoomModel value) {
+		ZoomModel oldModel = model;
+		if (oldModel != value) {
+			if (oldModel != null) {
+				oldModel.removePropertyChangeListener(ZoomModel.SHOW_GRID, grid);
+				oldModel.removePropertyChangeListener(ZoomModel.ZOOM, spinnerModel);
+			}
+			model = value;
+			spinnerModel = new SpinnerModel();
+			spinner.setModel(spinnerModel);
+			grid.update();
+			if (value != null) {
+				value.addPropertyChangeListener(ZoomModel.SHOW_GRID, grid);
+				value.addPropertyChangeListener(ZoomModel.ZOOM, spinnerModel);
+			}
+		}
 	}
 }

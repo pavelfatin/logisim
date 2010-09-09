@@ -16,6 +16,7 @@ import com.cburch.logisim.LogisimVersion;
 import com.cburch.logisim.circuit.Circuit;
 import com.cburch.logisim.circuit.CircuitException;
 import com.cburch.logisim.circuit.CircuitMutation;
+import com.cburch.logisim.circuit.SubcircuitFactory;
 import com.cburch.logisim.comp.Component;
 import com.cburch.logisim.comp.ComponentFactory;
 import com.cburch.logisim.comp.ComponentDrawContext;
@@ -296,9 +297,10 @@ public class AddTool extends Tool {
 			canvas.setErrorMessage(Strings.getter("cannotModifyError"));
 			return;
 		}
-		if (factory instanceof Circuit) {
+		if (factory instanceof SubcircuitFactory) {
+			SubcircuitFactory circFact = (SubcircuitFactory) factory;
 			Dependencies depends = canvas.getProject().getDependencies();
-			if (!depends.canAdd(circ, (Circuit) factory)) {
+			if (!depends.canAdd(circ, circFact.getSubcircuit())) {
 				canvas.setErrorMessage(Strings.getter("circularError"));
 				return;
 			}
@@ -350,9 +352,6 @@ public class AddTool extends Tool {
 				Action action = mutation.toAction(Strings.getter("addComponentAction", factory.getDisplayGetter()));
 				canvas.getProject().doAction(action);
 				lastAddition = action;
-				/*XN:
-				lastAddition = CircuitActions.addComponent(circ, c, false);
-				canvas.getProject().doAction(lastAddition); */
 				added = c;
 			} catch (CircuitException ex) {
 				JOptionPane.showMessageDialog(canvas.getProject().getFrame(),

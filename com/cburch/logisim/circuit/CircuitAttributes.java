@@ -6,7 +6,8 @@ package com.cburch.logisim.circuit;
 import java.util.Arrays;
 import java.util.List;
 
-import com.cburch.logisim.circuit.appear.CircuitPinListener;
+import com.cburch.logisim.circuit.appear.CircuitAppearanceEvent;
+import com.cburch.logisim.circuit.appear.CircuitAppearanceListener;
 import com.cburch.logisim.data.AbstractAttributeSet;
 import com.cburch.logisim.data.Attribute;
 import com.cburch.logisim.data.AttributeEvent;
@@ -51,7 +52,7 @@ class CircuitAttributes extends AbstractAttributeSet {
 		}
 	}
 	
-	private class MyListener implements AttributeListener, CircuitPinListener {
+	private class MyListener implements AttributeListener, CircuitAppearanceListener {
 		public void attributeListChanged(AttributeEvent e) { }
 
 		public void attributeValueChanged(AttributeEvent e) {
@@ -60,10 +61,16 @@ class CircuitAttributes extends AbstractAttributeSet {
 			fireAttributeValueChanged(a, e.getValue());
 		}
 		
-		public void pinsChanged() {
+		public void circuitAppearanceChanged(CircuitAppearanceEvent e) {
 			SubcircuitFactory factory;
 			factory = (SubcircuitFactory) subcircInstance.getFactory();
-			factory.computePorts(subcircInstance);
+			if (e.isConcerning(CircuitAppearanceEvent.PORTS)) {
+				factory.computePorts(subcircInstance);
+			}
+			if (e.isConcerning(CircuitAppearanceEvent.BOUNDS)) {
+				subcircInstance.recomputeBounds();
+			}
+			subcircInstance.fireInvalidated();
 		}
 	}
 	
@@ -92,7 +99,7 @@ class CircuitAttributes extends AbstractAttributeSet {
 		if (subcircInstance != null && listener == null) {
 			listener = new MyListener();
 			source.getStaticAttributes().addAttributeListener(listener);
-			source.addPinListener(listener);
+			source.getAppearance().addCircuitAppearanceListener(listener);
 		}
 	}
 	

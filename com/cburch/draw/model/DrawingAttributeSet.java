@@ -115,6 +115,12 @@ public class DrawingAttributeSet implements AttributeSet, Cloneable {
 				for (AttributeListener listener : listeners) {
 					listener.attributeValueChanged(e);
 				}
+				if (attr == DrawAttr.PAINT_TYPE) {
+					e = new AttributeEvent(this);
+					for (AttributeListener listener : listeners) {
+						listener.attributeListChanged(e);
+					}
+				}
 				return;
 			}
 		}

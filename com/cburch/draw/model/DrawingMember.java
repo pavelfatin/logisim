@@ -7,7 +7,10 @@ import com.cburch.logisim.data.AttributeListener;
 import com.cburch.logisim.data.AttributeSet;
 import com.cburch.logisim.data.Location;
 import com.cburch.logisim.util.EventSourceWeakSupport;
+import com.cburch.logisim.util.GraphicsUtil;
 
+import java.awt.Color;
+import java.awt.Graphics;
 import java.util.List;
 
 import org.w3c.dom.Document;
@@ -110,4 +113,50 @@ public abstract class DrawingMember implements AttributeSet, CanvasObject, Clone
 			}
 		}
 	}
+	
+	protected void fireAttributeListChanged() {
+		AttributeEvent e = new AttributeEvent(this);
+		for (AttributeListener listener : listeners) {
+			listener.attributeListChanged(e);
+		}
+	}
+	
+	protected boolean setForStroke(Graphics g) {
+		List<Attribute<?>> attrs = getAttributes();
+		if (attrs.contains(DrawAttr.PAINT_TYPE)) {
+			Object value = getValue(DrawAttr.PAINT_TYPE);
+			if (value == DrawAttr.PAINT_FILL) return false;
+		}
+
+		Integer width = getValue(DrawAttr.STROKE_WIDTH);
+		if (width != null && width.intValue() > 0) {
+			Color color = getValue(DrawAttr.STROKE_COLOR);
+			if (color != null && color.getAlpha() == 0) {
+				return false;
+			} else {
+				GraphicsUtil.switchToWidth(g, width);
+				if (color != null) g.setColor(color);
+				return true;
+			}
+		} else {
+			return false;
+		}
+	}
+	
+	protected boolean setForFill(Graphics g) {
+		List<Attribute<?>> attrs = getAttributes();
+		if (attrs.contains(DrawAttr.PAINT_TYPE)) {
+			Object value = getValue(DrawAttr.PAINT_TYPE);
+			if (value == DrawAttr.PAINT_STROKE) return false;
+		}
+
+		Color color = getValue(DrawAttr.FILL_COLOR);
+		if (color != null && color.getAlpha() == 0) {
+			return false;
+		} else {
+			if (color != null) g.setColor(color);
+			return true;
+		}
+	}
+
 }

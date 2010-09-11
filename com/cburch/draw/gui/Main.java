@@ -12,7 +12,7 @@ import com.cburch.draw.model.Drawables;
 import com.cburch.draw.model.DrawingAttributeSet;
 import com.cburch.draw.undo.UndoLog;
 import com.cburch.draw.undo.UndoLogDispatcher;
-import com.cburch.logisim.gui.main.AttributeTable;
+import com.cburch.logisim.gui.generic.AttributeTable;
 import com.cburch.logisim.util.HorizontalSplitPane;
 import com.cburch.logisim.util.VerticalSplitPane;
 

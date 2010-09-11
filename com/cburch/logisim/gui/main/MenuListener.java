@@ -17,6 +17,7 @@ import com.cburch.logisim.circuit.CircuitState;
 import com.cburch.logisim.circuit.Simulator;
 import com.cburch.logisim.file.LibraryEvent;
 import com.cburch.logisim.file.LibraryListener;
+import com.cburch.logisim.file.LogisimFile;
 import com.cburch.logisim.gui.menu.ProjectCircuitActions;
 import com.cburch.logisim.gui.menu.LogisimMenuBar;
 import com.cburch.logisim.gui.menu.SimulateListener;
@@ -211,8 +212,10 @@ class MenuListener {
 		
 		private void computeEnabled() {
 			Project proj = frame.getProject();
+			LogisimFile file = proj.getLogisimFile();
 			Circuit cur = proj.getCurrentCircuit();
-			boolean isProjectCircuit = proj.getLogisimFile().contains(cur);
+			int curIndex = file.getCircuits().indexOf(cur);
+			boolean isProjectCircuit = curIndex >= 0;
 			boolean canSetMain = false;
 			boolean canMoveUp = false;
 			boolean canMoveDown = false;
@@ -220,14 +223,10 @@ class MenuListener {
 			String view = frame.getMainPanel().getView();
 			if (isProjectCircuit) {
 				List<AddTool> tools = proj.getLogisimFile().getTools();
-				Object firstTool = tools.get(0);
-				Object lastTool = tools.get(tools.size() - 1);
 
 				canSetMain = proj.getLogisimFile().getMainCircuit() != cur;
-				canMoveUp = firstTool instanceof AddTool
-					&& ((AddTool) firstTool).getFactory() != cur;
-				canMoveDown = lastTool instanceof AddTool
-					&& ((AddTool) lastTool).getFactory() != cur;
+				canMoveUp = curIndex > 0;
+				canMoveDown = curIndex < tools.size() - 1;
 				canRemove = proj.getLogisimFile().getTools().size() > 1;
 			}
 			
@@ -242,6 +241,8 @@ class MenuListener {
 			projbar.setEnabled(LogisimMenuBar.REMOVE_CIRCUIT, canRemove);
 			menubar.setEnabled(LogisimMenuBar.EDIT_LAYOUT, !view.equals(MainPanel.LAYOUT));
 			menubar.setEnabled(LogisimMenuBar.EDIT_APPEARANCE, !view.equals(MainPanel.APPEARANCE));
+			projbar.setEnabled(LogisimMenuBar.EDIT_LAYOUT, !view.equals(MainPanel.LAYOUT));
+			projbar.setEnabled(LogisimMenuBar.EDIT_APPEARANCE, !view.equals(MainPanel.APPEARANCE));
 			menubar.setEnabled(LogisimMenuBar.ANALYZE_CIRCUIT, true);
 			menubar.setEnabled(LogisimMenuBar.CIRCUIT_STATS, true);
 		}
@@ -273,14 +274,14 @@ class MenuListener {
 	
 	private Frame frame;
 	private LogisimMenuBar menubar;
-	private ProjectToolbar projbar;
+	private ProjectToolbarModel projbar;
 	private FileListener fileListener = new FileListener();
 	private EditListener editListener = new EditListener();
 	private ProjectMenuListener projectListener = new ProjectMenuListener();
 	private SimulateMenuListener simulateListener = new SimulateMenuListener();
 
 	public MenuListener(Frame frame, LogisimMenuBar menubar,
-			ProjectToolbar projectToolbar) {
+			ProjectToolbarModel projectToolbar) {
 		this.frame = frame;
 		this.menubar = menubar;
 		this.projbar = projectToolbar;

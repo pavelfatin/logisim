@@ -11,7 +11,6 @@ import org.w3c.dom.Element;
 import com.cburch.logisim.data.Attribute;
 import com.cburch.logisim.data.Bounds;
 import com.cburch.logisim.data.Location;
-import com.cburch.logisim.util.GraphicsUtil;
 import com.cburch.logisim.util.UnmodifiableList;
 
 class Line extends DrawingMember {
@@ -161,16 +160,6 @@ class Line extends DrawingMember {
 			y1 += dy;
 		}
 		bounds = Bounds.create(x0, y0, 0, 0).add(x1, y1);
-	}
-	
-	protected boolean setForStroke(Graphics g) {
-		if(strokeWidth > 0) {
-			GraphicsUtil.switchToWidth(g, strokeWidth);
-			g.setColor(strokeColor);
-			return true;
-		} else {
-			return false;
-		}
 	}
 	
 	public void paint(Graphics g, Location handle, int dx, int dy) {

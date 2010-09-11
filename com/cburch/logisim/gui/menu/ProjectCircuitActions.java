@@ -9,7 +9,6 @@ import java.awt.GridBagLayout;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import javax.swing.JDialog;
@@ -103,19 +102,12 @@ public class ProjectCircuitActions {
 	}
 
 	public static void doMoveCircuit(Project proj, Circuit cur, int delta) {
-		List<AddTool> tools = proj.getLogisimFile().getTools();
-		AddTool tool = null;
-		int oldPos = -1;
-		for (AddTool t : tools) {
-			oldPos++;
-			if (t.getFactory() == cur) {
-				tool = t;
-				break;
-			}
-		}
+		AddTool tool = proj.getLogisimFile().getAddTool(cur);
 		if (tool != null) {
+			int oldPos = proj.getLogisimFile().getCircuits().indexOf(cur);
 			int newPos = oldPos + delta;
-			if (newPos >= 0 && newPos < tools.size()) {
+			int toolsCount = proj.getLogisimFile().getTools().size();
+			if (newPos >= 0 && newPos < toolsCount) {
 				proj.doAction(LogisimFileActions.moveCircuit(tool, newPos));
 			}
 		}

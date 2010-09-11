@@ -70,18 +70,58 @@ public class Selection {
 	}
 	
 	public void setSelected(CanvasObject shape, boolean value) {
+		setSelected(Collections.singleton(shape), value);
+	}
+	
+	public void setSelected(Collection<CanvasObject> shapes, boolean value) {
 		if(value) {
-			if(selected.add(shape)) {
-				fireChanged(SelectionEvent.ACTION_ADDED,
-						Collections.singleton(shape));
+			ArrayList<CanvasObject> added;
+			added = new ArrayList<CanvasObject>(shapes.size());
+			for (CanvasObject shape : shapes) {
+				if(selected.add(shape)) {
+					added.add(shape);
+				}
+			}
+			if (!added.isEmpty()) {
+				fireChanged(SelectionEvent.ACTION_ADDED, added);
 			}
 		} else {
-			if(selected.remove(shape)) {
+			ArrayList<CanvasObject> removed;
+			removed = new ArrayList<CanvasObject>(shapes.size());
+			for (CanvasObject shape : shapes) {
+				if(selected.remove(shape)) {
+					suppressed.remove(shape);
+					if(handleShape == shape) handleShape = null;
+					removed.add(shape);
+				}
+			}
+			if (!removed.isEmpty()) {
+				fireChanged(SelectionEvent.ACTION_REMOVED, removed);
+			}
+		}
+	}
+	
+	public void toggleSelected(Collection<CanvasObject> shapes) {
+		ArrayList<CanvasObject> added;
+		added = new ArrayList<CanvasObject>(shapes.size());
+		ArrayList<CanvasObject> removed;
+		removed = new ArrayList<CanvasObject>(shapes.size());
+		for (CanvasObject shape : shapes) {
+			if (selected.contains(shape)) {
+				selected.remove(shape);
 				suppressed.remove(shape);
 				if(handleShape == shape) handleShape = null;
-				fireChanged(SelectionEvent.ACTION_REMOVED,
-						Collections.singleton(shape));
+				removed.add(shape);
+			} else {
+				selected.add(shape);
+				added.add(shape);
 			}
+		}
+		if (!removed.isEmpty()) {
+			fireChanged(SelectionEvent.ACTION_REMOVED, removed);
+		}
+		if (!added.isEmpty()) {
+			fireChanged(SelectionEvent.ACTION_ADDED, added);
 		}
 	}
 	

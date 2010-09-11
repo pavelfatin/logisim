@@ -1,19 +1,19 @@
 package com.cburch.logisim.gui.appear;
 
-import javax.swing.JScrollPane;
-
 import com.cburch.draw.gui.AttributeManager;
 import com.cburch.draw.model.DrawingAttributeSet;
 import com.cburch.draw.toolbar.ToolbarModel;
-import com.cburch.logisim.circuit.Circuit;
+import com.cburch.logisim.circuit.CircuitState;
 import com.cburch.logisim.data.AttributeSet;
-import com.cburch.logisim.gui.main.AttributeTable;
-import com.cburch.logisim.gui.main.ZoomModel;
+import com.cburch.logisim.gui.generic.AttributeTable;
+import com.cburch.logisim.gui.generic.CanvasPane;
+import com.cburch.logisim.gui.generic.ZoomModel;
 import com.cburch.logisim.proj.Project;
 
-public class AppearanceEditor extends JScrollPane {
+public class AppearanceEditor {
 	private DrawingAttributeSet attrs;
 	private AppearanceCanvas canvas;
+	private CanvasPane canvasPane;
 	private AppearanceToolbarModel toolbarModel;
 	private AttributeManager attributeManager;
 	private ZoomModel zoomModel;
@@ -26,7 +26,12 @@ public class AppearanceEditor extends JScrollPane {
 		zoomModel = new AppearanceZoomModel();
 		canvas.getGridPainter().setZoomModel(zoomModel);
 		attributeManager = null;
-		setViewportView(canvas);
+		canvasPane = new CanvasPane(canvas);
+		canvasPane.setZoomModel(zoomModel);
+	}
+	
+	public CanvasPane getCanvasPane() {
+		return canvasPane;
 	}
 	
 	public ToolbarModel getToolbarModel() {
@@ -50,7 +55,7 @@ public class AppearanceEditor extends JScrollPane {
 		return ret;
 	}
 	
-	public void setCircuit(Project proj, Circuit circuit) {
-		canvas.setCircuit(proj, circuit);
+	public void setCircuit(Project proj, CircuitState circuitState) {
+		canvas.setCircuit(proj, circuitState);
 	}
 }

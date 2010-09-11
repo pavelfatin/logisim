@@ -3,7 +3,7 @@ package com.cburch.logisim.gui.appear;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
-import com.cburch.logisim.gui.main.ZoomModel;
+import com.cburch.logisim.gui.generic.ZoomModel;
 
 class AppearanceZoomModel implements ZoomModel {
 	private static final double[] ZOOM_OPTIONS = { 100, 150, 200, 300, 400, 600, 800 };

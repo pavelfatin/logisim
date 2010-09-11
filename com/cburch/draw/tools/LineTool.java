@@ -3,6 +3,7 @@ package com.cburch.draw.tools;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Graphics;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -19,6 +20,7 @@ import com.cburch.draw.model.DrawingAttributeSet;
 import com.cburch.logisim.data.Attribute;
 import com.cburch.logisim.data.Location;
 import com.cburch.logisim.util.Icons;
+import com.cburch.logisim.util.UnmodifiableList;
 
 class LineTool extends AbstractTool {
 	private DrawingAttributeSet attrs;
@@ -56,7 +58,14 @@ class LineTool extends AbstractTool {
 	
 	@Override
 	public void mousePressed(Canvas canvas, MouseEvent e) {
-		Location loc = Location.create(e.getX(), e.getY());
+		int x = e.getX();
+		int y = e.getY();
+		int mods = e.getModifiersEx();
+		if ((mods & InputEvent.CTRL_DOWN_MASK) != 0) {
+			x = (x + 5) / 10 * 10;
+			y = (y + 5) / 10 * 10;
+		}
+		Location loc = Location.create(x, y);
 		mouseStart = loc;
 		mouseEnd = loc;
 		lastMouseX = loc.getX();
@@ -79,8 +88,9 @@ class LineTool extends AbstractTool {
 			if(!start.equals(end)) {
 				active = false;
 				CanvasModel model = canvas.getModel();
-				CanvasObject add = Drawables.createLine(start.getX(), start.getY(),
-						end.getX(), end.getY(), attrs);
+				List<Location> locs = UnmodifiableList.create(new Location[] {
+						start, end });
+				CanvasObject add = Drawables.createPolyline(locs, attrs);
 				canvas.doAction(new ModelAddAction(model, add));
 				repaintArea(canvas);
 			}
@@ -89,23 +99,35 @@ class LineTool extends AbstractTool {
 	
 	@Override
 	public void keyPressed(Canvas canvas, KeyEvent e) {
-		if(active && e.getKeyCode() == KeyEvent.VK_SHIFT) {
+		int code = e.getKeyCode();
+		if(active && (code == KeyEvent.VK_SHIFT || code == KeyEvent.VK_CONTROL)) {
 			updateMouse(canvas, lastMouseX, lastMouseY, e.getModifiersEx());
 		}
 	}
 	
 	@Override
 	public void keyReleased(Canvas canvas, KeyEvent e) {
-		if(active && e.getKeyCode() == KeyEvent.VK_SHIFT) {
-			updateMouse(canvas, lastMouseX, lastMouseY, e.getModifiersEx());
-		}
+		keyPressed(canvas, e);
 	}
 	
 	private void updateMouse(Canvas canvas, int mx, int my, int mods) {
 		if(active) {
 			boolean shift = (mods & MouseEvent.SHIFT_DOWN_MASK) != 0;
-			Location newEnd = shift ? snapTo8Cardinals(mouseStart, mx, my)
-					: Location.create(mx, my);
+			Location newEnd;
+			if (shift) {
+				newEnd = snapTo8Cardinals(mouseStart, mx, my);
+			} else {
+				newEnd = Location.create(mx, my);
+			}
+			
+			if ((mods & InputEvent.CTRL_DOWN_MASK) != 0) {
+				int x = newEnd.getX();
+				int y = newEnd.getY();
+				x = (x + 5) / 10 * 10;
+				y = (y + 5) / 10 * 10;
+				newEnd = Location.create(x, y);
+			}
+			
 			if(!newEnd.equals(mouseEnd)) {
 				mouseEnd = newEnd;
 				repaintArea(canvas);

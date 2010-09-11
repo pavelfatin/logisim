@@ -1,7 +1,7 @@
 /* Copyright (c) 2010, Carl Burch. License information is located in the
  * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
 
-package com.cburch.logisim.gui.main;
+package com.cburch.logisim.gui.generic;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -12,6 +12,7 @@ import java.awt.image.MemoryImageSource;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
+
 
 public class GridPainter {
 	private static final int GRID_DOT_COLOR = 0xFF777777;

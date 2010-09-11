@@ -1,7 +1,7 @@
 /* Copyright (c) 2010, Carl Burch. License information is located in the
  * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
 
-package com.cburch.logisim.gui.main;
+package com.cburch.logisim.gui.generic;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -17,7 +17,7 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 
-class ZoomControl extends JPanel {
+public class ZoomControl extends JPanel {
 	private class SpinnerModel extends AbstractSpinnerModel
 			implements PropertyChangeListener {
 		public Object getNextValue() {

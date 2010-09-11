@@ -128,11 +128,9 @@ public class Drawing implements CanvasModel {
 	public void removeObjects(Collection<? extends CanvasObject> shapes) {
 		ArrayList<CanvasObject> removed = new ArrayList<CanvasObject>(shapes.size());
 		for (CanvasObject shape : shapes) {
-			if (shape.canRemove()) {
-				boolean done = canvasObjects.remove(shape);
-				if (done) {
-					removed.add(shape);
-				}
+			boolean done = canvasObjects.remove(shape);
+			if (done) {
+				removed.add(shape);
 			}
 		}
 		if (!removed.isEmpty()) {

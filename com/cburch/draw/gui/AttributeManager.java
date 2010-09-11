@@ -23,8 +23,8 @@ import com.cburch.logisim.data.AttributeEvent;
 import com.cburch.logisim.data.AttributeListener;
 import com.cburch.logisim.data.AttributeSet;
 import com.cburch.logisim.data.AttributeSets;
-import com.cburch.logisim.gui.main.AttributeTable;
-import com.cburch.logisim.gui.main.AttributeTableListener;
+import com.cburch.logisim.gui.generic.AttributeTable;
+import com.cburch.logisim.gui.generic.AttributeTableListener;
 
 public class AttributeManager
 		implements AttributeTableListener, SelectionListener, AttributeListener,
@@ -40,10 +40,12 @@ public class AttributeManager
 		this.canvas = canvas;
 		this.table = table;
 		this.generalAttrs = attrs;
+		this.generalAttrs.addAttributeListener(this);
 		this.selected = Collections.emptyMap();
 		
 		canvas.getSelection().addSelectionListener(this);
 		canvas.addPropertyChangeListener(Canvas.TOOL_PROPERTY, this);
+		updateToolAttributes();
 	}
 
 	public void valueChangeRequested(AttributeTable table, AttributeSet attrs,
@@ -70,9 +72,12 @@ public class AttributeManager
 		for (AttributeSet attrs : newSel.keySet()) {
 			attrs.addAttributeListener(this);
 		}
-
+		computeAttributeList(newSel.keySet());
+	}
+	
+	private void computeAttributeList(Set<AttributeSet> attrsSet) {
 		Set<Attribute<?>> attrSet = new LinkedHashSet<Attribute<?>>();
-		Iterator<AttributeSet> sit = newSel.keySet().iterator();
+		Iterator<AttributeSet> sit = attrsSet.iterator();
 		if (sit.hasNext()) {
 			AttributeSet first = sit.next();
 			attrSet.addAll(first.getAttributes());
@@ -92,7 +97,7 @@ public class AttributeManager
 		int i = 0;
 		for (Attribute<?> attr : attrSet) {
 			attrs[i] = attr;
-			values[i] = getSelectionValue(attr, newSel.keySet());
+			values[i] = getSelectionValue(attr, attrsSet);
 			i++;
 		}
 		selectionAttrs = AttributeSets.fixedSet(attrs, values);
@@ -132,7 +137,15 @@ public class AttributeManager
 		canvas.doAction(new ModelChangeAttributeAction(model, oldVals, newVals));
 	}
 
-	public void attributeListChanged(AttributeEvent e) { }
+	public void attributeListChanged(AttributeEvent e) {
+		if (table.getAttributeSet() == generalAttrs) {
+			// showing tool attributes
+			updateToolAttributes();
+		} else {
+			// show selection attributes
+			computeAttributeList(selected.keySet());
+		}
+	}
 
 	public void attributeValueChanged(AttributeEvent e) {
 		if (selected.containsKey(e.getSource())) {
@@ -146,13 +159,17 @@ public class AttributeManager
 	public void propertyChange(PropertyChangeEvent evt) {
 		String prop = evt.getPropertyName();
 		if(prop.equals(Canvas.TOOL_PROPERTY)) {
-			Object tool = canvas.getTool();
-			if(tool instanceof AbstractTool) {
-				generalAttrs.setAttributes(((AbstractTool) tool).getAttributes());
-				table.setAttributeSet(generalAttrs, this);
-			} else {
-				table.setAttributeSet(null, null);
-			}
+			updateToolAttributes();
+		}
+	}
+	
+	private void updateToolAttributes() {
+		Object tool = canvas.getTool();
+		if(tool instanceof AbstractTool) {
+			generalAttrs.setAttributes(((AbstractTool) tool).getAttributes());
+			table.setAttributeSet(generalAttrs, this);
+		} else {
+			table.setAttributeSet(null, null);
 		}
 	}
 }

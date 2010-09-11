@@ -4,7 +4,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
@@ -16,93 +15,94 @@ import com.cburch.draw.canvas.CanvasObject;
 import com.cburch.draw.canvas.Selection;
 import com.cburch.draw.model.Drawing;
 import com.cburch.draw.model.DrawingMember;
+import com.cburch.logisim.circuit.Circuit;
 import com.cburch.logisim.data.Bounds;
 import com.cburch.logisim.data.Direction;
 import com.cburch.logisim.data.Location;
 import com.cburch.logisim.instance.Instance;
+import com.cburch.logisim.util.EventSourceWeakSupport;
 
 public class CircuitAppearance extends Drawing {
-	private class MyListener implements CanvasModelListener, CircuitPinListener {
+	private class MyListener implements CanvasModelListener {
 		public void modelChanged(CanvasModelEvent event) {
-			int type = event.getAction();
-			if (type == CanvasModelEvent.ACTION_REMOVED) {
-				boolean empty = true;
-				for (CanvasObject shape : getObjects()) {
-					if (!(shape instanceof AppearanceElement)) {
-						empty = false;
-						break;
-					}
-				}
-				if (empty) {
-					configureDefault(true);
-				}
-			} else {
+			if (!settingDefault) {
 				configureDefault(false);
-			}
-		}
-		
-		public void pinsChanged() {
-			defaultShapes = null;
-			if (!isDefault) {
-				PortManager.updatePorts(CircuitAppearance.this,
-						circuitPins.getPins());
+				fireCircuitAppearanceChanged(CircuitAppearanceEvent.ALL_TYPES);
 			}
 		}
 	}
 	
+	private Circuit circuit;
+	private EventSourceWeakSupport<CircuitAppearanceListener> listeners;
+	private PortManager portManager;
 	private CircuitPins circuitPins;
 	private MyListener myListener;
 	private boolean isDefault;
-	private List<CanvasObject> defaultShapes;
+	private boolean settingDefault;
 	
-	public CircuitAppearance(CircuitPins pins) {
-		circuitPins = pins;
+	public CircuitAppearance(Circuit circuit) {
+		this.circuit = circuit;
+		listeners = new EventSourceWeakSupport<CircuitAppearanceListener>();
+		portManager = new PortManager(this);
+		circuitPins = new CircuitPins(portManager);
 		myListener = new MyListener();
+		settingDefault = false;
 		addCanvasModelListener(myListener);
-		circuitPins.addPinListener(myListener);
 		configureDefault(true);
+	}
+	
+	public CircuitPins getCircuitPins() {
+		return circuitPins;
+	}
+	
+	public void addCircuitAppearanceListener(CircuitAppearanceListener l) {
+		listeners.add(l);
+	}
+	
+	public void removeCircuitAppearanceListener(CircuitAppearanceListener l) {
+		listeners.remove(l);
+	}
+	
+	void fireCircuitAppearanceChanged(int affected) {
+		CircuitAppearanceEvent event;
+		event = new CircuitAppearanceEvent(circuit, affected);
+		for (CircuitAppearanceListener listener : listeners) {
+			listener.circuitAppearanceChanged(event);
+		}
 	}
 	
 	public boolean isDefaultAppearance() {
 		return isDefault;
 	}
 	
+	void resetDefaultAppearance() {
+		if (isDefault) {
+			Collection<CanvasObject> shapes;
+			shapes = DefaultAppearance.build(circuitPins.getPins());
+			try {
+				settingDefault = true;
+				super.removeObjects(new ArrayList<CanvasObject>(getObjects()));
+				super.addObjects(shapes);
+			} finally {
+				settingDefault = false;
+			}
+			fireCircuitAppearanceChanged(CircuitAppearanceEvent.ALL_TYPES);
+		}
+	}
+	
+	void recomputePorts() {
+		if (isDefault) {
+			resetDefaultAppearance();
+		} else {
+			fireCircuitAppearanceChanged(CircuitAppearanceEvent.ALL_TYPES);
+		}
+	}
+	
 	private void configureDefault(boolean value) {
 		if (isDefault != value) {
 			isDefault = value;
 			if (value) {
-				defaultShapes = null;
-			} else {
-				List<CanvasObject> shapes = defaultShapes;
-				if (shapes == null) {
-					shapes = DefaultAppearance.build(circuitPins.getPins());
-				}
-				
-				CanvasObject origin = null;
-				HashSet<Instance> mapped = new HashSet<Instance>();
-				for (CanvasObject o : super.getObjects()) {
-					if (o instanceof AppearanceOrigin) {
-						origin = o;
-					} else if (o instanceof AppearancePort) {
-						mapped.add(((AppearancePort) o).getPin());
-					}
-				}
-
-				ArrayList<CanvasObject> toAdd = new ArrayList<CanvasObject>();
-				for (CanvasObject o : shapes) {
-					if (o instanceof AppearanceOrigin) {
-						if (origin == null) toAdd.add(o);
-					} else if (o instanceof AppearancePort) {
-						Instance port = ((AppearancePort) o).getPin();
-						if (!mapped.contains(port)) toAdd.add(o);
-					}
-				}
-				if (!toAdd.isEmpty()) {
-					addObjects(toAdd);
-				}
-				
-				PortManager.updatePorts(CircuitAppearance.this,
-						circuitPins.getPins());
+				resetDefaultAppearance();
 			}
 		}
 	}
@@ -116,25 +116,11 @@ public class CircuitAppearance extends Drawing {
 		}
 	}
 	
-	@Override
-	public Collection<CanvasObject> getObjects() {
-		if (isDefault) {
-			List<CanvasObject> ret = defaultShapes;
-			if (ret == null) {
-				ret = DefaultAppearance.build(circuitPins.getPins());
-				defaultShapes = ret;
-			}
-			return ret;
-		} else {
-			return super.getObjects();
-		}
-	}
-	
 	public void setObjects(Collection<DrawingMember> members) {
-		super.removeObjects(super.getObjects());
+		super.removeObjects(new ArrayList<CanvasObject>(super.getObjects()));
 		super.addObjects(members);
 		configureDefault(false);
-		circuitPins.fireChanged();
+		recomputePorts();
 	}
 
 	public void paintSubcircuit(Graphics g, Direction facing) {
@@ -299,7 +285,7 @@ public class CircuitAppearance extends Drawing {
 	
 	private void checkToFirePortsChanged(Collection<? extends CanvasObject> shapes) {
 		if (affectsPorts(shapes)) {
-			circuitPins.fireChanged();
+			recomputePorts();
 		}
 	}
 	

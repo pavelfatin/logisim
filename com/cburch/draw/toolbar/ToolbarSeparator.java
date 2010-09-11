@@ -24,12 +24,12 @@ public class ToolbarSeparator implements ToolbarItem {
 		int w = dim.width;
 		int h = dim.height;
 		if (h >= w) { // separator is a vertical line in horizontal toolbar
-			h -= 4;
+			h -= 8;
 			y = 2;
 			x = (w - 2) / 2;
 			w = 2;
 		} else { // separator is a horizontal line in vertical toolbar
-			w -= 4;
+			w -= 8;
 			x = 2;
 			y = (h - 2) / 2;
 			h = 2;

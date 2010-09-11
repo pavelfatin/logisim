@@ -26,7 +26,7 @@ class RoundRectangleTool extends RectangularTool {
 	
 	@Override
 	public List<Attribute<?>> getAttributes() {
-		return DrawAttr.ATTRS_ROUND_RECT;
+		return DrawAttr.getRoundRectAttributes(attrs.getValue(DrawAttr.PAINT_TYPE));
 	}
 
 	@Override

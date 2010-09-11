@@ -203,11 +203,12 @@ public class SubcircuitFactory extends InstanceFactory {
 		Graphics g = painter.getGraphics();
 		CircuitAttributes attrs = (CircuitAttributes) painter.getAttributeSet();
 		Direction facing = attrs.getFacing();
+		Direction defaultFacing = source.getAppearance().getFacing();
 		Location loc = painter.getLocation();
 		g.translate(loc.getX(), loc.getY());
 		source.getAppearance().paintSubcircuit(g, facing);
+		drawLabel(painter, getOffsetBounds(attrs), facing, defaultFacing);
 		g.translate(-loc.getX(), -loc.getY());
-		drawLabel(painter, getOffsetBounds(attrs), facing);
 	}
 
 	@Override
@@ -217,7 +218,7 @@ public class SubcircuitFactory extends InstanceFactory {
 	}
 	
 	private void drawLabel(InstancePainter painter, Bounds bds,
-			Direction facing) {
+			Direction facing, Direction defaultFacing) {
 		AttributeSet staticAttrs = source.getStaticAttributes();
 		String label = staticAttrs.getValue(StdAttr.LABEL);
 		if (label != null && !label.equals("")) {
@@ -237,7 +238,7 @@ public class SubcircuitFactory extends InstanceFactory {
 			int x = bds.getX() + bds.getWidth() / 2;
 			int y = bds.getY() + bds.getHeight() / 2;
 			Graphics g = painter.getGraphics().create();
-			double angle = Math.PI / 2 - up.toRadians() - facing.toRadians();
+			double angle = Math.PI / 2 - (up.toRadians() - defaultFacing.toRadians()) - facing.toRadians();
 			if (g instanceof Graphics2D && Math.abs(angle) > 0.01) {
 				Graphics2D g2 = (Graphics2D) g;
 				g2.rotate(angle, x, y);

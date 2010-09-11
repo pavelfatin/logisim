@@ -40,7 +40,6 @@ class Polyline extends Poly {
 	
 	@Override
 	public void draw(Graphics g, int[] xs, int[] ys) {
-		setForStroke(g);
-		g.drawPolyline(xs, ys, xs.length);
+		if (setForStroke(g)) g.drawPolyline(xs, ys, xs.length);
 	}
 }

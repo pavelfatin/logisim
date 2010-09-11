@@ -1,4 +1,4 @@
-package com.cburch.logisim.gui.main;
+package com.cburch.logisim.gui.generic;
 
 import java.beans.PropertyChangeListener;
 

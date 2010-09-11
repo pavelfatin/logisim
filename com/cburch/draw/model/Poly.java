@@ -8,7 +8,6 @@ import java.util.List;
 import com.cburch.logisim.data.Attribute;
 import com.cburch.logisim.data.Bounds;
 import com.cburch.logisim.data.Location;
-import com.cburch.logisim.util.GraphicsUtil;
 import com.cburch.logisim.util.UnmodifiableList;
 
 abstract class Poly extends DrawingMember {
@@ -187,16 +186,6 @@ abstract class Poly extends DrawingMember {
 			y[i] = yy;
 		}
 		draw(g, x, y);
-	}
-	
-	protected boolean setForStroke(Graphics g) {
-		if(strokeWidth > 0) {
-			GraphicsUtil.switchToWidth(g, strokeWidth);
-			g.setColor(strokeColor);
-			return true;
-		} else {
-			return false;
-		}
 	}
 	
 	protected int getStrokeWidth() {

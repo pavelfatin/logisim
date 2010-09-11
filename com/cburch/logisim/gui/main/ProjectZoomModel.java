@@ -8,6 +8,7 @@ import com.cburch.logisim.data.AttributeListener;
 import com.cburch.logisim.data.AttributeSet;
 import com.cburch.logisim.file.LogisimFile;
 import com.cburch.logisim.file.Options;
+import com.cburch.logisim.gui.generic.ZoomModel;
 import com.cburch.logisim.proj.Project;
 import com.cburch.logisim.proj.ProjectEvent;
 import com.cburch.logisim.proj.ProjectListener;

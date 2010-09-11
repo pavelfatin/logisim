@@ -26,7 +26,7 @@ class PolygonTool extends PolyTool {
 	
 	@Override
 	public List<Attribute<?>> getAttributes() {
-		return DrawAttr.ATTRS_FILL;
+		return DrawAttr.getFillAttributes(attrs.getValue(DrawAttr.PAINT_TYPE));
 	}
 	
 	@Override

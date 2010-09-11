@@ -9,14 +9,17 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import com.cburch.logisim.data.Attribute;
+import com.cburch.logisim.data.AttributeOption;
 import com.cburch.logisim.data.Location;
 
 class Polygon extends Poly {
 	private GeneralPath path;
+	private AttributeOption paintType;
 	private Color fillColor;
 	
 	public Polygon(List<Location> locations) {
 		super(locations);
+		paintType = DrawAttr.PAINT_STROKE;
 		fillColor = Color.WHITE;
 	}
 	
@@ -31,13 +34,15 @@ class Polygon extends Poly {
 	
 	@Override
 	public List<Attribute<?>> getAttributes() {
-		return DrawAttr.ATTRS_FILL;
+		return DrawAttr.getFillAttributes(paintType);
 	}
 	
 	@Override
 	@SuppressWarnings("unchecked")
 	public <V> V getValue(Attribute<V> attr) {
-		if(attr == DrawAttr.FILL_COLOR) {
+		if (attr == DrawAttr.PAINT_TYPE) {
+			return (V) paintType;
+		} else if(attr == DrawAttr.FILL_COLOR) {
 			return (V) fillColor;
 		} else {
 			return super.getValue(attr);
@@ -46,7 +51,10 @@ class Polygon extends Poly {
 	
 	@Override
 	public void updateValue(Attribute<?> attr, Object value) {
-		if(attr == DrawAttr.FILL_COLOR) {
+		if (attr == DrawAttr.PAINT_TYPE) {
+			paintType = (AttributeOption) value;
+			fireAttributeListChanged();
+		} else if(attr == DrawAttr.FILL_COLOR) {
 			fillColor = (Color) value;
 		} else {
 			super.updateValue(attr, value);
@@ -81,10 +89,7 @@ class Polygon extends Poly {
 	
 	@Override
 	public void draw(Graphics g, int[] xs, int[] ys) {
-		if (fillColor.getAlpha() != 0) {
-			g.setColor(fillColor);
-			g.fillPolygon(xs, ys, xs.length);
-		}
+		if (setForFill(g)) g.fillPolygon(xs, ys, xs.length);
 		if (setForStroke(g)) g.drawPolygon(xs, ys, xs.length);
 	}
 }

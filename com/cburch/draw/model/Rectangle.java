@@ -25,7 +25,7 @@ public class Rectangle extends Rectangular {
 
 	@Override
 	public List<Attribute<?>> getAttributes() {
-		return DrawAttr.ATTRS_FILL;
+		return DrawAttr.getFillAttributes(getPaintType());
 	}
 	
 	@Override

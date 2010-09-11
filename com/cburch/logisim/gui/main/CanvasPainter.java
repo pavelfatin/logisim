@@ -27,6 +27,7 @@ import com.cburch.logisim.data.Bounds;
 import com.cburch.logisim.data.Location;
 import com.cburch.logisim.data.Value;
 import com.cburch.logisim.file.Options;
+import com.cburch.logisim.gui.generic.GridPainter;
 import com.cburch.logisim.proj.Project;
 import com.cburch.logisim.tools.Tool;
 import com.cburch.logisim.util.GraphicsUtil;
@@ -165,7 +166,7 @@ class CanvasPainter implements AttributeListener {
 		if (showHalo && haloedComponent != null && haloedCircuit == circ
 				&& !hidden.contains(haloedComponent)) {
 			GraphicsUtil.switchToWidth(g, 3);
-			g.setColor(AttributeTable.HALO_COLOR);
+			g.setColor(Canvas.HALO_COLOR);
 			Bounds bds = haloedComponent.getBounds(g).expand(5);
 			int w = bds.getWidth();
 			int h = bds.getHeight();

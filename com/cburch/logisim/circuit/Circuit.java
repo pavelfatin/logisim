@@ -16,8 +16,6 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 import com.cburch.logisim.circuit.appear.CircuitAppearance;
-import com.cburch.logisim.circuit.appear.CircuitPinListener;
-import com.cburch.logisim.circuit.appear.CircuitPins;
 import com.cburch.logisim.comp.Component;
 import com.cburch.logisim.comp.ComponentDrawContext;
 import com.cburch.logisim.comp.ComponentEvent;
@@ -29,7 +27,6 @@ import com.cburch.logisim.data.BitWidth;
 import com.cburch.logisim.data.Bounds;
 import com.cburch.logisim.data.Location;
 import com.cburch.logisim.std.base.Clock;
-import com.cburch.logisim.std.base.Pin;
 import com.cburch.logisim.util.CollectionUtil;
 import com.cburch.logisim.util.EventSourceWeakSupport;
 
@@ -111,7 +108,6 @@ public class Circuit {
 	private EventSourceWeakSupport<CircuitListener> listeners
 		= new EventSourceWeakSupport<CircuitListener>();
 	private HashSet<Component> comps = new HashSet<Component>(); // doesn't include wires
-	CircuitPins pins;
 	CircuitWires wires = new CircuitWires();
 		// wires is package-protected for CircuitState and Analyze only.
 	private ArrayList<Component> clocks = new ArrayList<Component>();
@@ -119,8 +115,7 @@ public class Circuit {
 	private WeakHashMap<Component, Circuit> circuitsUsingThis;
 
 	public Circuit(String name) {
-		pins = new CircuitPins();
-		appearance = new CircuitAppearance(pins);
+		appearance = new CircuitAppearance(this);
 		staticAttrs = CircuitAttributes.createBaseAttrs(this, name);
 		subcircuitFactory = new SubcircuitFactory(this);
 		locker = new CircuitLocker();
@@ -140,7 +135,6 @@ public class Circuit {
 
 		Set<Component> oldComps = comps;
 		comps = new HashSet<Component>();
-		pins = new CircuitPins();
 		wires = new CircuitWires();
 		clocks.clear();
 		for (Component comp : oldComps) {
@@ -181,9 +175,6 @@ public class Circuit {
 			l.circuitChanged(event);
 		}
 	}
-
-	void addPinListener(CircuitPinListener l) { pins.addPinListener(l); }
-	void removePinListener(CircuitPinListener l) { pins.removePinListener(l); }
 
 	//
 	// access methods
@@ -300,8 +291,9 @@ public class Circuit {
 	}
 
 	public Bounds getBounds() {
+		Bounds wireBounds = wires.getWireBounds();
 		Iterator<Component> it = comps.iterator();
-		if (!it.hasNext()) return wires.getWireBounds();
+		if (!it.hasNext()) return wireBounds;
 		Component first = it.next();
 		Bounds firstBounds = first.getBounds();
 		int xMin = firstBounds.getX();
@@ -318,8 +310,12 @@ public class Circuit {
 			if (y0 < yMin) yMin = y0;
 			if (y1 > yMax) yMax = y1;
 		}
-		return Bounds.create(xMin, yMin, xMax - xMin, yMax - yMin)
-			.add(wires.getWireBounds());
+		Bounds compBounds = Bounds.create(xMin, yMin, xMax - xMin, yMax - yMin);
+		if (wireBounds.getWidth() == 0 || wireBounds.getHeight() == 0) {
+			return compBounds;
+		} else {
+			return compBounds.add(wireBounds);
+		}
 	}
 
 	public Bounds getBounds(Graphics g) {
@@ -328,15 +324,24 @@ public class Circuit {
 		int yMin = ret.getY();
 		int xMax = xMin + ret.getWidth();
 		int yMax = yMin + ret.getHeight();
+		if (ret == Bounds.EMPTY_BOUNDS) {
+			xMin = Integer.MAX_VALUE;
+			yMin = Integer.MAX_VALUE;
+			xMax = Integer.MIN_VALUE;
+			yMax = Integer.MIN_VALUE;
+		}
 		for (Component c : comps) {
 			Bounds bds = c.getBounds(g);
-			int x0 = bds.getX(); int x1 = x0 + bds.getWidth();
-			int y0 = bds.getY(); int y1 = y0 + bds.getHeight();
-			if (x0 < xMin) xMin = x0;
-			if (x1 > xMax) xMax = x1;
-			if (y0 < yMin) yMin = y0;
-			if (y1 > yMax) yMax = y1;
+			if (bds != null && bds != Bounds.EMPTY_BOUNDS) {
+				int x0 = bds.getX(); int x1 = x0 + bds.getWidth();
+				int y0 = bds.getY(); int y1 = y0 + bds.getHeight();
+				if (x0 < xMin) xMin = x0;
+				if (x1 > xMax) xMax = x1;
+				if (y0 < yMin) yMin = y0;
+				if (y1 > yMax) yMax = y1;
+			}
 		}
+		if (xMin > xMax || yMin > yMax) return Bounds.EMPTY_BOUNDS;
 		return Bounds.create(xMin, yMin, xMax - xMin, yMax - yMin);
 	}
 
@@ -366,9 +371,7 @@ public class Circuit {
 
 			wires.add(c);
 			ComponentFactory factory = c.getFactory();
-			if (factory instanceof Pin) {
-				pins.addPin(c);
-			} else if (factory instanceof Clock) {
+			if (factory instanceof Clock) {
 				clocks.add(c);
 			} else if (factory instanceof SubcircuitFactory) {
 				SubcircuitFactory subcirc = (SubcircuitFactory) factory;
@@ -388,9 +391,7 @@ public class Circuit {
 			wires.remove(c);
 			comps.remove(c);
 			ComponentFactory factory = c.getFactory();
-			if (factory instanceof Pin) {
-				pins.removePin(c);
-			} else if (factory instanceof Clock) {
+			if (factory instanceof Clock) {
 				clocks.remove(c);
 			} else if (factory instanceof SubcircuitFactory) {
 				SubcircuitFactory subcirc = (SubcircuitFactory) factory;
@@ -427,7 +428,12 @@ public class Circuit {
 					g_copy.dispose();
 					g_copy = g_new;
 
-					c.draw(context);
+					try {
+						c.draw(context);
+					} catch (RuntimeException e) {
+						// this is a JAR developer error - display it and move on
+						e.printStackTrace();
+					}
 				}
 			}
 		}

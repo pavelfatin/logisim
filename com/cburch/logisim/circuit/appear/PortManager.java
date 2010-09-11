@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import com.cburch.draw.canvas.CanvasObject;
 import com.cburch.logisim.data.Bounds;
@@ -18,15 +17,41 @@ import com.cburch.logisim.instance.Instance;
 import com.cburch.logisim.instance.StdAttr;
 
 class PortManager {
-	private PortManager() { }
+	private CircuitAppearance appearance;
+	private boolean doingUpdate;
 	
-	public static void updatePorts(CircuitAppearance appear,
-			Collection<Instance> circuitPins) {
+	PortManager(CircuitAppearance appearance) {
+		this.appearance = appearance;
+		this.doingUpdate = false;
+	}
+	
+	void updatePorts() {
+		appearance.recomputePorts();
+	}
+	
+	void updatePorts(Set<Instance> adds, Set<Instance> removes,
+			Map<Instance, Instance> replaces, Collection<Instance> allPins) {
+		if (appearance.isDefaultAppearance()) {
+			appearance.recomputePorts();
+		} else if (!doingUpdate) {
+			// "doingUpdate" ensures infinite recursion doesn't happen
+			try {
+				doingUpdate = true;
+				performUpdate(adds, removes, replaces, allPins);
+				appearance.recomputePorts();
+			} finally {
+				doingUpdate = false;
+			}
+		}
+	}
+	
+	private void performUpdate(Set<Instance> adds, Set<Instance> removes,
+			Map<Instance, Instance> replaces, Collection<Instance> allPins) {
 		// Find the current objects corresponding to pins
 		Map<Instance, AppearancePort> oldObjects;
 		oldObjects = new HashMap<Instance, AppearancePort>();
 		AppearanceOrigin origin = null;
-		for (CanvasObject o : appear.getObjects()) {
+		for (CanvasObject o : appearance.getObjects()) {
 			if (o instanceof AppearancePort) {
 				AppearancePort port = (AppearancePort) o;
 				oldObjects.put(port.getPin(), port);
@@ -37,7 +62,7 @@ class PortManager {
 		
 		// ensure we have the origin in the circuit
 		if (origin == null) {
-			for (CanvasObject o : DefaultAppearance.build(circuitPins)) {
+			for (CanvasObject o : DefaultAppearance.build(allPins)) {
 				if (o instanceof AppearanceOrigin) {
 					origin = (AppearanceOrigin) o;
 				}
@@ -45,43 +70,46 @@ class PortManager {
 			if (origin == null) {
 				origin = new AppearanceOrigin(Location.create(100, 100));
 			}
-			appear.addObjects(Collections.singleton(origin));
+			appearance.addObjects(Collections.singleton(origin));
 		}
+
+		// Compute how the ports should change
+		ArrayList<AppearancePort> portRemoves;
+		portRemoves = new ArrayList<AppearancePort>(removes.size());
+		ArrayList<AppearancePort> portAdds;
+		portAdds = new ArrayList<AppearancePort>(adds.size());
 		
-		// Now find which of these pins are not found in circuit,
-		// and which pins in circuit are not represented here
-		Set<Instance> unused = new HashSet<Instance>(oldObjects.keySet());
-		Map<Location, Instance> unrep = new TreeMap<Location, Instance>();
-		for (Instance pin : circuitPins) {
-			if (oldObjects.containsKey(pin)) {
-				unused.remove(pin);
-			} else {
-				unrep.put(pin.getLocation(), pin);
+		// handle removals
+		for (Instance pin : removes) {
+			AppearancePort port = oldObjects.remove(pin);
+			if (port != null) {
+				portRemoves.add(port);
 			}
 		}
-		
-		// Remove any pins not represented in circuit
-		if (unused.size() > 0) {
-			List<CanvasObject> toRemove;
-			toRemove = new ArrayList<CanvasObject>(unused.size());
-			for (Instance pin : unused) {
-				CanvasObject o = oldObjects.remove(pin);
-				toRemove.add(o);
+		// handle replacements
+		ArrayList<Instance> addsCopy = new ArrayList<Instance>(adds);
+		for (Map.Entry<Instance, Instance> entry : replaces.entrySet()) {
+			AppearancePort port = oldObjects.get(entry.getKey());
+			if (port != null) {
+				port.setPin(entry.getValue());
+			} else { // this really shouldn't happen, but just to make sure...
+				addsCopy.add(entry.getValue());
 			}
-			appear.removeObjects(toRemove);
 		}
-		
-		// Add any pins not represented in appearance
-		if (unrep.size() > 0) {
-			List<CanvasObject> toAdd;
-			toAdd = new ArrayList<CanvasObject>(unrep.size());
-			for (Instance pin : unrep.values()) {
-				Location loc = computeDefaultLocation(appear, pin, oldObjects);
-				CanvasObject o = new AppearancePort(loc, pin);
-				toAdd.add(o);
-			}
-			appear.addObjects(toAdd);
+		// handle additions
+		DefaultAppearance.sortPinList(addsCopy, Direction.EAST);
+			// They're probably not really all facing east.
+			// I'm just sorting them so it works predictably.
+		for (Instance pin : addsCopy) {
+			Location loc = computeDefaultLocation(appearance, pin, oldObjects);
+			AppearancePort o = new AppearancePort(loc, pin);
+			portAdds.add(o);
+			oldObjects.put(pin, o);
 		}
+
+		// Now update the appearance
+		appearance.removeObjects(portRemoves);
+		appearance.addObjects(portAdds);
 	}
 	
 	private static Location computeDefaultLocation(CircuitAppearance appear,
@@ -89,25 +117,26 @@ class PortManager {
 		// Determine which locations are being used in canvas, and look for
 		// which instances facing the same way in layout
 		Set<Location> usedLocs = new HashSet<Location>();
-		Map<Location, Instance> sameWay = new TreeMap<Location, Instance>();
+		List<Instance> sameWay = new ArrayList<Instance>();
 		Direction facing = pin.getAttributeValue(StdAttr.FACING);
 		for (Map.Entry<Instance, AppearancePort> entry : others.entrySet()) {
 			Instance pin2 = entry.getKey();
 			Location loc = entry.getValue().getLocation();
 			usedLocs.add(loc);
 			if (pin2.getAttributeValue(StdAttr.FACING) == facing) {
-				sameWay.put(pin2.getLocation(), pin2);
+				sameWay.add(pin2);
 			}
 		}
 		
 		// if at least one faces the same way, place pin relative to that
 		if (sameWay.size() > 0) {
-			sameWay.put(pin.getLocation(), pin);
+			sameWay.add(pin);
+			DefaultAppearance.sortPinList(sameWay, facing);
 			boolean isFirst = false; 
 			Instance neighbor = null; // (preferably previous in map)
 			boolean atFirst = true;
 			boolean found = false;
-			for (Instance p : sameWay.values()) {
+			for (Instance p : sameWay) {
 				if (p == pin) {
 					found = true;
 					isFirst = atFirst;

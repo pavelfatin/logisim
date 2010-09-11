@@ -20,8 +20,8 @@ class AppearanceOrigin extends AppearanceElement {
 	static final List<Attribute<?>> ATTRIBUTES
 		= UnmodifiableList.create(new Attribute<?>[] { FACING });
 	
-	private static final int RADIUS = 3;
-	private static final int INDICATOR_LENGTH = 7;
+	private static final int RADIUS = 2;
+	private static final int INDICATOR_LENGTH = 8;
 	private static final Color SYMBOL_COLOR = new Color(0, 128, 0);
 	
 	private Direction facing;

@@ -222,7 +222,7 @@ public class Explorer extends JTree implements LocaleListener {
 				int x, int y) {
 			// draw halo if appropriate
 			if (tool == haloedTool && proj.getFrame().getShowHalo()) {
-				g.setColor(AttributeTable.HALO_COLOR);
+				g.setColor(Canvas.HALO_COLOR);
 				g.fillRoundRect(x, y, 20, 20, 10, 10);
 				g.setColor(Color.BLACK);
 			}

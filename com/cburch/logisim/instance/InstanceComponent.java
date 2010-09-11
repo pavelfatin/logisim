@@ -128,14 +128,20 @@ class InstanceComponent implements Component, AttributeListener, ToolTipMaker {
 	// listening methods
 	//
 	public void addComponentListener(ComponentListener l) {
-		if (listeners == null) listeners = new EventSourceWeakSupport<ComponentListener>();
-		listeners.add(l);
+		EventSourceWeakSupport<ComponentListener> ls = listeners;
+		if (ls == null) {
+			ls = new EventSourceWeakSupport<ComponentListener>();
+			ls.add(l);
+			listeners = ls;
+		} else {
+			ls.add(l);
+		}
 	}
 
 	public void removeComponentListener(ComponentListener l) {
 		if (listeners != null) {
 			listeners.remove(l);
-			if (listeners.size() == 0) listeners = null;
+			if (listeners.isEmpty()) listeners = null;
 		}
 	}
 	

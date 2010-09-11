@@ -26,7 +26,7 @@ public class ToolbarToolItem implements ToolbarItem {
 	}
 	
 	public void paintIcon(Component destination, Graphics g) {
-		icon.paintIcon(destination, g, 2, 2);
+		icon.paintIcon(destination, g, 4, 4);
 	}
 	
 	public String getToolTip() {
@@ -34,6 +34,6 @@ public class ToolbarToolItem implements ToolbarItem {
 	}
 	
 	public Dimension getDimension(Object orientation) {
-		return new Dimension(icon.getIconWidth() + 4, icon.getIconHeight() + 4);
+		return new Dimension(icon.getIconWidth() + 8, icon.getIconHeight() + 8);
 	}
 }

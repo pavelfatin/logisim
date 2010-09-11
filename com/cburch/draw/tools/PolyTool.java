@@ -3,6 +3,7 @@ package com.cburch.draw.tools;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Graphics;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -50,12 +51,22 @@ abstract class PolyTool extends AbstractTool {
 	
 	@Override
 	public void mousePressed(Canvas canvas, MouseEvent e) {
+		int mx = e.getX();
+		int my = e.getY();
+		lastMouseX = mx;
+		lastMouseY = my;
+		int mods = e.getModifiersEx();
+		if ((mods & InputEvent.CTRL_DOWN_MASK) != 0) {
+			mx = (mx + 5) / 10 * 10;
+			my = (my + 5) / 10 * 10;
+		}
+
 		if(active && e.getClickCount() > 1) {
 			commit(canvas);
 			return;
 		}
 
-		Location loc = Location.create(e.getX(), e.getY());
+		Location loc = Location.create(mx, my);
 		ArrayList<Location> locs = locations;
 		if(!active) { locs.clear(); locs.add(loc); }
 		locs.add(loc);
@@ -71,8 +82,6 @@ abstract class PolyTool extends AbstractTool {
 		xs = x;
 		ys = y;
 		mouseDown = true;
-		lastMouseX = loc.getX();
-		lastMouseY = loc.getY();
 		active = canvas.getModel() != null;
 		repaintArea(canvas);
 	}
@@ -101,23 +110,22 @@ abstract class PolyTool extends AbstractTool {
 	
 	@Override
 	public void keyPressed(Canvas canvas, KeyEvent e) {
-		if(active && mouseDown && e.getKeyCode() == KeyEvent.VK_SHIFT) {
+		int code = e.getKeyCode();
+		if(active && mouseDown
+				&& (code == KeyEvent.VK_SHIFT || code == KeyEvent.VK_CONTROL)) {
 			updateMouse(canvas, lastMouseX, lastMouseY, e.getModifiersEx());
 		}
 	}
 	
 	@Override
 	public void keyReleased(Canvas canvas, KeyEvent e) {
-		if(active && mouseDown && e.getKeyCode() == KeyEvent.VK_SHIFT) {
-			updateMouse(canvas, lastMouseX, lastMouseY, e.getModifiersEx());
-		}
+		keyPressed(canvas, e);
 	}
 
 	@Override
 	public void keyTyped(Canvas canvas, KeyEvent e) {
 		if(active) {
 			char ch = e.getKeyChar();
-			System.err.println(Integer.toHexString(ch));
 			if(ch == '\u001b') { // escape key
 				active = false;
 				locations.clear();
@@ -145,6 +153,8 @@ abstract class PolyTool extends AbstractTool {
 	}
 	
 	private void updateMouse(Canvas canvas, int mx, int my, int mods) {
+		lastMouseX = mx;
+		lastMouseY = my;
 		if(active) {
 			int index = locations.size() - 1;
 			Location last = locations.get(index);
@@ -155,6 +165,14 @@ abstract class PolyTool extends AbstractTool {
 			} else {
 				newLast = Location.create(mx, my);
 			}
+			if ((mods & MouseEvent.CTRL_DOWN_MASK) != 0) {
+				int lastX = newLast.getX();
+				int lastY = newLast.getY();
+				lastX = (lastX + 5) / 10 * 10;
+				lastY = (lastY + 5) / 10 * 10;
+				newLast = Location.create(lastX, lastY);
+			}
+			
 			if(!newLast.equals(last)) {
 				locations.set(index, newLast);
 				xs[index] = newLast.getX();
@@ -162,8 +180,6 @@ abstract class PolyTool extends AbstractTool {
 				repaintArea(canvas);
 			}
 		}
-		lastMouseX = mx;
-		lastMouseY = my;
 	}
 
 	private void repaintArea(Canvas canvas) {

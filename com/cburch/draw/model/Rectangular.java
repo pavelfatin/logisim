@@ -5,19 +5,21 @@ import java.awt.Graphics;
 import java.util.List;
 
 import com.cburch.logisim.data.Attribute;
+import com.cburch.logisim.data.AttributeOption;
 import com.cburch.logisim.data.Bounds;
 import com.cburch.logisim.data.Location;
-import com.cburch.logisim.util.GraphicsUtil;
 import com.cburch.logisim.util.UnmodifiableList;
 
 abstract class Rectangular extends DrawingMember {
 	private Bounds bounds; // excluding the stroke's width
+	private AttributeOption paintType;
 	private int strokeWidth;
 	private Color strokeColor;
 	private Color fillColor;
 	
 	public Rectangular(int x, int y, int w, int h) {
 		bounds = Bounds.create(x, y, w, h);
+		paintType = DrawAttr.PAINT_STROKE;
 		strokeWidth = 1;
 		strokeColor = Color.BLACK;
 		fillColor = Color.WHITE;
@@ -39,14 +41,20 @@ abstract class Rectangular extends DrawingMember {
 		return bounds.getHeight();
 	}
 	
+	public AttributeOption getPaintType() {
+		return paintType;
+	}
+	
 	@Override
 	@SuppressWarnings("unchecked")
 	public <V> V getValue(Attribute<V> attr) {
-		if(attr == DrawAttr.STROKE_COLOR) {
+		if (attr == DrawAttr.PAINT_TYPE) {
+			return (V) paintType;
+		} else if (attr == DrawAttr.STROKE_COLOR) {
 			return (V) strokeColor;
-		} else if(attr == DrawAttr.FILL_COLOR) {
+		} else if (attr == DrawAttr.FILL_COLOR) {
 			return (V) fillColor;
-		} else if(attr == DrawAttr.STROKE_WIDTH) {
+		} else if (attr == DrawAttr.STROKE_WIDTH) {
 			return (V) Integer.valueOf(strokeWidth);
 		} else {
 			return null;
@@ -55,7 +63,10 @@ abstract class Rectangular extends DrawingMember {
 	
 	@Override
 	public void updateValue(Attribute<?> attr, Object value) {
-		if(attr == DrawAttr.STROKE_COLOR) {
+		if (attr == DrawAttr.PAINT_TYPE) {
+			paintType = (AttributeOption) value;
+			fireAttributeListChanged();
+		} else if(attr == DrawAttr.STROKE_COLOR) {
 			strokeColor = (Color) value;
 		} else if(attr == DrawAttr.FILL_COLOR) {
 			fillColor = (Color) value;
@@ -145,25 +156,6 @@ abstract class Rectangular extends DrawingMember {
 			if(y1 < y0) { int t = y0; y0 = y1; y1 = t; }
 	
 			draw(g, x0, y0, x1 - x0, y1 - y0);
-		}
-	}
-	
-	protected boolean setForStroke(Graphics g) {
-		if(strokeWidth > 0) {
-			GraphicsUtil.switchToWidth(g, strokeWidth);
-			g.setColor(strokeColor);
-			return true;
-		} else {
-			return false;
-		}
-	}
-	
-	protected boolean setForFill(Graphics g) {
-		if(fillColor.getAlpha() != 0) {
-			g.setColor(fillColor);
-			return true;
-		} else {
-			return false;
 		}
 	}
 	

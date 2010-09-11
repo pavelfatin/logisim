@@ -28,7 +28,7 @@ class RoundRectangle extends Rectangular {
 	
 	@Override
 	public List<Attribute<?>> getAttributes() {
-		return DrawAttr.ATTRS_ROUND_RECT;
+		return DrawAttr.getRoundRectAttributes(getPaintType());
 	}
 	
 	@Override

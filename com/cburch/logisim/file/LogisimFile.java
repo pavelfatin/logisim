@@ -18,7 +18,6 @@ import java.io.StringWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -156,6 +155,16 @@ public class LogisimFile extends Library implements LibraryEventSource {
 		}
 		return ret;
 	}
+	
+	public AddTool getAddTool(Circuit circ) {
+		for (AddTool tool : tools) {
+			SubcircuitFactory factory = (SubcircuitFactory) tool.getFactory();
+			if (factory.getSubcircuit() == circ) {
+				return tool;
+			}
+		}
+		return null;
+	}
 
 	public Circuit getMainCircuit() {
 		return main;
@@ -215,16 +224,10 @@ public class LogisimFile extends Library implements LibraryEventSource {
 			throw new RuntimeException("Cannot remove last circuit");
 		}
 
-		AddTool circuitTool = null;
-		for (Iterator<AddTool> it = tools.iterator(); it.hasNext(); ) {
-			AddTool tool = it.next();
-			if (tool.getFactory() == circuit) {
-				it.remove();
-				circuitTool = tool;
-				break;
-			}
-		}
-		if (circuitTool != null) {
+		int index = getCircuits().indexOf(circuit);
+		if (index >= 0) {
+			Tool circuitTool = tools.remove(index);
+
 			if (main == circuit) {
 				AddTool dflt_tool = tools.get(0);
 				SubcircuitFactory factory = (SubcircuitFactory) dflt_tool.getFactory();

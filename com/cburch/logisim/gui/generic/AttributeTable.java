@@ -1,7 +1,7 @@
 /* Copyright (c) 2010, Carl Burch. License information is located in the
  * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
 
-package com.cburch.logisim.gui.main;
+package com.cburch.logisim.gui.generic;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -43,8 +43,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class AttributeTable extends JTable implements LocaleListener {
-	static final Color HALO_COLOR = new Color(192, 255, 255);
-	
 	private class MyListener implements AttributeListener {
 		public void attributeListChanged(AttributeEvent e) {
 			if (e.getSource() != attrs) {
@@ -397,7 +395,7 @@ public class AttributeTable extends JTable implements LocaleListener {
 		return attrs;
 	}
 	
-	AttributeTableListener getAttributeTableListener() {
+	public AttributeTableListener getAttributeTableListener() {
 		return listener;
 	}
 

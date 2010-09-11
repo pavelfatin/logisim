@@ -10,10 +10,10 @@ import com.cburch.logisim.data.Location;
 import com.cburch.logisim.instance.Instance;
 import com.cburch.logisim.std.base.Pin;
 
-class AppearancePort extends AppearanceElement {
+public class AppearancePort extends AppearanceElement {
 	private static final int RADIUS = 4;
 	private static final int MINOR_RADIUS = 2;
-	private static final Color SYMBOL_COLOR = Color.BLUE;
+	public static final Color COLOR = Color.BLUE;
 	
 	private Instance pin;
 	
@@ -44,6 +44,10 @@ class AppearancePort extends AppearanceElement {
 		return pin;
 	}
 	
+	void setPin(Instance value) {
+		pin = value;
+	}
+	
 	@Override
 	protected int getRadius() {
 		return RADIUS;
@@ -54,7 +58,7 @@ class AppearancePort extends AppearanceElement {
 		Location location = getLocation();
 		int x = location.getX();
 		int y = location.getY();
-		g.setColor(SYMBOL_COLOR);
+		g.setColor(COLOR);
 		if (Pin.FACTORY.isInputPin(pin)) {
 			g.drawRect(x - RADIUS, y - RADIUS, 2 * RADIUS, 2 * RADIUS);
 		} else {

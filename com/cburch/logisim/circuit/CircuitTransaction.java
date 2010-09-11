@@ -7,6 +7,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 
+import com.cburch.logisim.circuit.appear.CircuitPins;
+
 public abstract class CircuitTransaction {
 	public static final Integer READ_ONLY = Integer.valueOf(1);
 	public static final Integer READ_WRITE = Integer.valueOf(2);
@@ -22,7 +24,23 @@ public abstract class CircuitTransaction {
 		try {
 			this.run(mutator);
 			
+			// Let the port locations of each subcircuit's appearance be
+			// updated to reflect the changes - this needs to happen before
+			// wires are repaired because it could lead to some wires being
+			// split
 			Collection<Circuit> modified = mutator.getModifiedCircuits();
+			for (Circuit circuit : modified) {
+				CircuitMutatorImpl circMutator = circuit.getLocker().getMutator();
+				if (circMutator == mutator) {
+					CircuitPins pins = circuit.getAppearance().getCircuitPins();
+					ReplacementMap repl = mutator.getReplacementMap(circuit);
+					if (repl != null) {
+						pins.transactionCompleted(repl);
+					}
+				}
+			}
+
+			// Now go through each affected circuit and repair its wires
 			for (Circuit circuit : modified) {
 				CircuitMutatorImpl circMutator = circuit.getLocker().getMutator();
 				if (circMutator == mutator) {
@@ -34,6 +52,7 @@ public abstract class CircuitTransaction {
 					circMutator.markModified(circuit);
 				}
 			}
+			
 			result = new CircuitTransactionResult(mutator);
 			for (Circuit circuit : result.getModifiedCircuits()) {
 				circuit.fireEvent(CircuitEvent.TRANSACTION_DONE, result);

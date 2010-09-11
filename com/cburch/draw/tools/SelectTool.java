@@ -5,6 +5,7 @@ import java.awt.Cursor;
 import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -177,15 +178,11 @@ class SelectTool extends AbstractTool {
 			break;
 		case RECT_SELECT:
 			Bounds bds = Bounds.create(start).add(x1, y1);
-			for (CanvasObject shape : canvas.getModel().getObjectsIn(bds)) {
-				selection.setSelected(shape, true);
-			}
+			selection.setSelected(canvas.getModel().getObjectsIn(bds), true);
 			break;
 		case RECT_TOGGLE:
 			bds = Bounds.create(start).add(x1, y1);
-			for (CanvasObject shape : canvas.getModel().getObjectsIn(bds)) {
-				selection.setSelected(shape, !selected.contains(shape));
-			}
+			selection.toggleSelected(canvas.getModel().getObjectsIn(bds));
 			break;
 		}
 		selection.clearDrawsSuppressed();
@@ -237,17 +234,16 @@ class SelectTool extends AbstractTool {
 		char ch = e.getKeyChar();
 		Selection selected = canvas.getSelection();
 		if((ch == '\u0008' || ch == '\u007F') && !selected.isEmpty()) {
-			boolean found = false;
+			ArrayList<CanvasObject> toRemove = new ArrayList<CanvasObject>();
 			for (CanvasObject shape : selected.getSelected()) {
 				if (shape.canRemove()) {
-					found = true;
-					break;
+					toRemove.add(shape);
 				}
 			}
-			if (found) {
+			if (!toRemove.isEmpty()) {
 				e.consume();
 				CanvasModel model = canvas.getModel();
-				canvas.doAction(new ModelRemoveAction(model, selected.getSelected()));
+				canvas.doAction(new ModelRemoveAction(model, toRemove));
 				selected.clearSelected();
 				repaintArea(canvas);
 			}
@@ -298,18 +294,22 @@ class SelectTool extends AbstractTool {
 		Location end = dragEnd;
 		int dx;
 		int dy;
+		boolean drawHandles;
 		switch (action) {
 		case MOVE_ALL:
+			drawHandles = false;
 			Location delta = selection.getMovingDelta();
 			dx = delta.getX();
 			dy = delta.getY();
 			break;
 		case MOVE_HANDLE:
+			drawHandles = false;
 			delta = selection.getHandleDelta();
 			dx = delta.getX();
 			dy = delta.getY();
 			break;
 		default:
+			drawHandles = true;
 			dx = end.getX() - start.getX();
 			dy = end.getY() - start.getY();
 		}
@@ -319,22 +319,24 @@ class SelectTool extends AbstractTool {
 		int offs = HANDLE_SIZE / 2;
 		CanvasObject hanShape = selection.getHandleShape();
 		Location handle = selection.getHandleLocation();
-		for (CanvasObject d : selection.getSelected()) {
-			List<Location> handles;
-			if(action == MOVE_HANDLE && d == hanShape) {
-				handles = d.getHandles(handle, dx, dy);
-			} else {
-				handles = d.getHandles(null, 0, 0);
-			}
-			for (Location loc : handles) {
-				int x = loc.getX();
-				int y = loc.getY();
-				if(action == MOVE_ALL) { x += dx; y += dy; }
-				if(d == hanShape && loc.equals(handle)) {
-					g.fillRect(x - offs, y - offs, size + 1, size + 1);
+		if (drawHandles) {
+			for (CanvasObject d : selection.getSelected()) {
+				List<Location> handles;
+				if(action == MOVE_HANDLE && d == hanShape) {
+					handles = d.getHandles(handle, dx, dy);
 				} else {
-					g.clearRect(x - offs, y - offs, size, size);
-					g.drawRect(x - offs, y - offs, size, size);
+					handles = d.getHandles(null, 0, 0);
+				}
+				for (Location loc : handles) {
+					int x = loc.getX();
+					int y = loc.getY();
+					if(action == MOVE_ALL) { x += dx; y += dy; }
+					if(d == hanShape && loc.equals(handle)) {
+						g.fillRect(x - offs, y - offs, size + 1, size + 1);
+					} else {
+						g.clearRect(x - offs, y - offs, size, size);
+						g.drawRect(x - offs, y - offs, size, size);
+					}
 				}
 			}
 		}

@@ -70,6 +70,10 @@ public class Canvas extends JComponent {
 		}
 	}
 	
+	public void repaintCanvasCoords(int x, int y, int width, int height) {
+		repaint(x, y, width, height);
+	}
+	
 	@Override
 	public void paintComponent(Graphics g) {
 		paintBackground(g);

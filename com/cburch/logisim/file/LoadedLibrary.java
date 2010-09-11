@@ -116,7 +116,7 @@ public class LoadedLibrary extends Library implements LibraryEventSource {
 	}
 	
 	private void resolveChanges(Library old) {
-		if (listeners.size() == 0) return;
+		if (listeners.isEmpty()) return;
 		
 		if (!base.getDisplayName().equals(old.getDisplayName())) {
 			fireLibraryEvent(LibraryEvent.SET_NAME, base.getDisplayName());

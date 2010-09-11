@@ -31,6 +31,11 @@ import com.cburch.logisim.file.LibraryEvent;
 import com.cburch.logisim.file.LibraryListener;
 import com.cburch.logisim.file.Options;
 import com.cburch.logisim.gui.appear.AppearanceEditor;
+import com.cburch.logisim.gui.generic.AttributeTable;
+import com.cburch.logisim.gui.generic.AttributeTableListener;
+import com.cburch.logisim.gui.generic.CanvasPane;
+import com.cburch.logisim.gui.generic.ZoomControl;
+import com.cburch.logisim.gui.generic.ZoomModel;
 import com.cburch.logisim.gui.menu.LogisimMenuBar;
 import com.cburch.logisim.proj.Project;
 import com.cburch.logisim.proj.ProjectActions;
@@ -41,7 +46,6 @@ import com.cburch.logisim.tools.Tool;
 import com.cburch.logisim.util.HorizontalSplitPane;
 import com.cburch.logisim.util.LocaleListener;
 import com.cburch.logisim.util.LocaleManager;
-import com.cburch.logisim.util.MacCompatibility;
 import com.cburch.logisim.util.StringUtil;
 import com.cburch.logisim.util.VerticalSplitPane;
 
@@ -68,7 +72,7 @@ public class Frame extends JFrame
 				placeToolbar(attrs.getValue(Options.ATTR_TOOLBAR_LOC));
 			} else if (action == ProjectEvent.ACTION_SET_CURRENT) {
 				mainPanel.setView(MainPanel.LAYOUT);
-				appearance.setCircuit(proj, proj.getCurrentCircuit());
+				appearance.setCircuit(proj, proj.getCircuitState());
 				viewAttributes(proj.getTool());
 				computeTitle();
 			} else if (action == ProjectEvent.ACTION_SET_TOOL) {
@@ -129,7 +133,7 @@ public class Frame extends JFrame
 
 		@Override
 		public void windowOpened(WindowEvent e) {
-			layoutCanvas.computeSize();
+			layoutCanvas.computeSize(true);
 		}
 	}
 
@@ -171,7 +175,8 @@ public class Frame extends JFrame
 	private Canvas          layoutCanvas;
 	private JPanel          canvasPanel;
 	private AppearanceEditor appearance;
-	private ProjectToolbar  projectToolbar;
+	private Toolbar         projectToolbar;
+	private ProjectToolbarModel projectToolbarModel;
 	private Explorer        explorer;
 	private AttributeTable  attrTable;
 	private ZoomModel       projectZoomModel;
@@ -192,12 +197,13 @@ public class Frame extends JFrame
 		proj.getOptions().getAttributeSet().addAttributeListener(myProjectListener);
 		computeTitle();
 		
-		projectToolbar = new ProjectToolbar();
+		projectToolbarModel = new ProjectToolbarModel(this);
+		projectToolbar = new Toolbar(projectToolbarModel);
 
 		// set up menu bar
 		menubar = new LogisimMenuBar(this, proj);
 		setJMenuBar(menubar);
-		menuListener = new MenuListener(this, menubar, projectToolbar);
+		menuListener = new MenuListener(this, menubar, projectToolbarModel);
 
 		// set up the content-bearing components
 		layoutToolbarModel = new LayoutToolbarModel(this, proj);
@@ -207,30 +213,25 @@ public class Frame extends JFrame
 		canvasPanel = new JPanel(new BorderLayout());
 		layoutCanvas = new Canvas(proj);
 		appearance = new AppearanceEditor();
-		appearance.setCircuit(proj, proj.getCurrentCircuit());
+		appearance.setCircuit(proj, proj.getCircuitState());
 		projectZoomModel = new ProjectZoomModel(proj);
 		layoutCanvas.getGridPainter().setZoomModel(projectZoomModel);
 		zoom = new ZoomControl(projectZoomModel);
 		attrTable = new AttributeTable(this);
 
-		// set up the contents, split down the middle, with the canvas
-		// on the right and a split pane on the left containing the
-		// explorer and attribute values.
-		JScrollPane canvasPane = new JScrollPane(layoutCanvas);
-		if (MacCompatibility.mrjVersion >= 0.0) {
-			canvasPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-			canvasPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-		}
-		layoutCanvas.setScrollPane(canvasPane);
-		
 		// set up the central area
+		CanvasPane canvasPane = new CanvasPane(layoutCanvas);
+		canvasPane.setZoomModel(projectZoomModel);
 		mainPanel = new MainPanel();
 		mainPanel.addChangeListener(myProjectListener);
 		mainPanel.addView(MainPanel.LAYOUT, canvasPane);
-		mainPanel.addView(MainPanel.APPEARANCE, appearance);
+		mainPanel.addView(MainPanel.APPEARANCE, appearance.getCanvasPane());
 		mainPanel.setView(MainPanel.LAYOUT);
 		canvasPanel.add(mainPanel, BorderLayout.CENTER);
-		
+
+		// set up the contents, split down the middle, with the canvas
+		// on the right and a split pane on the left containing the
+		// explorer and attribute values.
 		JPanel explPanel = new JPanel(new BorderLayout());
 		explPanel.add(projectToolbar, BorderLayout.NORTH);
 		explPanel.add(new JScrollPane(explorer), BorderLayout.CENTER);

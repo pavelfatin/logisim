@@ -1,4 +1,7 @@
-package com.cburch.logisim.gui.main;
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
+package com.cburch.logisim.gui.generic;
 
 import java.awt.CardLayout;
 import java.awt.Component;
@@ -8,14 +11,11 @@ import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-class MainPanel extends JPanel {
-	public static final String LAYOUT = "layout";
-	public static final String APPEARANCE = "appearance";
-	
+public class CardPanel extends JPanel {
 	private ArrayList<ChangeListener> listeners;
 	private String current;
 	
-	public MainPanel() {
+	public CardPanel() {
 		super(new CardLayout());
 		listeners = new ArrayList<ChangeListener>();
 		current = "";

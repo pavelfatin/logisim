@@ -31,18 +31,21 @@ import com.cburch.logisim.instance.StdAttr;
 import com.cburch.logisim.proj.Project;
 import com.cburch.logisim.std.base.Pin;
 import com.cburch.logisim.tools.MenuExtender;
-import com.cburch.logisim.tools.ToolTipMaker;
 import com.cburch.logisim.util.GraphicsUtil;
 import com.cburch.logisim.util.StringGetter;
 import com.cburch.logisim.util.StringUtil;
 
 public class SubcircuitFactory extends InstanceFactory {
-	private class CircuitFeature implements MenuExtender, ActionListener {
+	private class CircuitFeature implements StringGetter, MenuExtender, ActionListener {
 		private Instance instance;
 		private Project proj;
 		
 		public CircuitFeature(Instance instance) {
 			this.instance = instance;
+		}
+		
+		public String get() {
+			return source.getName();
 		}
 
 		public void configureMenu(JPopupMenu menu, Project proj) {
@@ -70,6 +73,7 @@ public class SubcircuitFactory extends InstanceFactory {
 		super("", null);
 		this.source = source;
 		setFacingAttribute(StdAttr.FACING);
+		setDefaultToolTip(new CircuitFeature(null));
 	}
 
 	public Circuit getSubcircuit() {
@@ -121,7 +125,6 @@ public class SubcircuitFactory extends InstanceFactory {
 	@Override
 	public Object getInstanceFeature(Instance instance, Object key) {
 		if (key == MenuExtender.class) return new CircuitFeature(instance);
-		if (key == ToolTipMaker.class) return this;
 		return super.getInstanceFeature(instance, key);
 	}
 	
@@ -140,7 +143,7 @@ public class SubcircuitFactory extends InstanceFactory {
 			ports[i] = new Port(loc.getX(), loc.getY(), type, width);
 			pins[i] = pin;
 			
-			String label = pin.getAttributeSet().getValue(StdAttr.LABEL);
+			String label = pin.getAttributeValue(StdAttr.LABEL);
 			if (label != null && label.length() > 0) {
 				ports[i].setToolTip(StringUtil.constantGetter(label));
 			}

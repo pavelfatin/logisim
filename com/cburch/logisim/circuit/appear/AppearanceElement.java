@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.logisim.circuit.appear;
 
 import java.awt.Graphics;
@@ -8,7 +11,6 @@ import com.cburch.draw.model.DrawingMember;
 import com.cburch.logisim.data.Attribute;
 import com.cburch.logisim.data.Bounds;
 import com.cburch.logisim.data.Location;
-import com.cburch.logisim.util.UnmodifiableList;
 
 public abstract class AppearanceElement extends DrawingMember {
 	private Location location;
@@ -56,31 +58,18 @@ public abstract class AppearanceElement extends DrawingMember {
 		location = location.translate(dx, dy);
 	}
 
-	public boolean contains(Location loc) {
+	protected boolean isInCircle(Location loc, int radius) {
 		int dx = loc.getX() - location.getX();
 		int dy = loc.getY() - location.getY();
-		int r = getRadius();
-		return dx * dx + dy * dy < r * r;
+		return dx * dx + dy * dy < radius * radius;
 	}
 
-	public Bounds getBounds() {
-		int r = getRadius();
-		return Bounds.create(location.getX() - r, location.getY() - r,
-				2 * r, 2 * r);
-	}
-
-	public List<Location> getHandles(Location handle, int dx, int dy) {
-		Location loc = location;
-		int r = getRadius();
-		return UnmodifiableList.create(new Location[] {
-				loc.translate(-r, -r), loc.translate(r, -r),
-				loc.translate(r, r), loc.translate(-r, r),
-		});
+	protected Bounds getBounds(int radius) {
+		return Bounds.create(location.getX() - radius, location.getY() - radius,
+				2 * radius, 2 * radius);
 	}
 
 	public abstract void paint(Graphics g, Location handle, int handleDx, int handleDy);
 
 	public abstract String getDisplayName();
-	
-	protected abstract int getRadius();
 }

@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.logisim.circuit.appear;
 
 import java.awt.Graphics;
@@ -14,7 +17,6 @@ import com.cburch.draw.canvas.CanvasModelListener;
 import com.cburch.draw.canvas.CanvasObject;
 import com.cburch.draw.canvas.Selection;
 import com.cburch.draw.model.Drawing;
-import com.cburch.draw.model.DrawingMember;
 import com.cburch.logisim.circuit.Circuit;
 import com.cburch.logisim.data.Bounds;
 import com.cburch.logisim.data.Direction;
@@ -25,8 +27,8 @@ import com.cburch.logisim.util.EventSourceWeakSupport;
 public class CircuitAppearance extends Drawing {
 	private class MyListener implements CanvasModelListener {
 		public void modelChanged(CanvasModelEvent event) {
-			if (!settingDefault) {
-				configureDefault(false);
+			if (!suppressRecompute) {
+				setDefaultAppearance(false);
 				fireCircuitAppearanceChanged(CircuitAppearanceEvent.ALL_TYPES);
 			}
 		}
@@ -38,7 +40,7 @@ public class CircuitAppearance extends Drawing {
 	private CircuitPins circuitPins;
 	private MyListener myListener;
 	private boolean isDefault;
-	private boolean settingDefault;
+	private boolean suppressRecompute;
 	
 	public CircuitAppearance(Circuit circuit) {
 		this.circuit = circuit;
@@ -46,9 +48,9 @@ public class CircuitAppearance extends Drawing {
 		portManager = new PortManager(this);
 		circuitPins = new CircuitPins(portManager);
 		myListener = new MyListener();
-		settingDefault = false;
+		suppressRecompute = false;
 		addCanvasModelListener(myListener);
-		configureDefault(true);
+		setDefaultAppearance(true);
 	}
 	
 	public CircuitPins getCircuitPins() {
@@ -75,16 +77,25 @@ public class CircuitAppearance extends Drawing {
 		return isDefault;
 	}
 	
-	void resetDefaultAppearance() {
+	public void setDefaultAppearance(boolean value) {
+		if (isDefault != value) {
+			isDefault = value;
+			if (value) {
+				recomputeDefaultAppearance();
+			}
+		}
+	}
+	
+	void recomputeDefaultAppearance() {
 		if (isDefault) {
 			Collection<CanvasObject> shapes;
 			shapes = DefaultAppearance.build(circuitPins.getPins());
 			try {
-				settingDefault = true;
+				suppressRecompute = true;
 				super.removeObjects(new ArrayList<CanvasObject>(getObjects()));
 				super.addObjects(shapes);
 			} finally {
-				settingDefault = false;
+				suppressRecompute = false;
 			}
 			fireCircuitAppearanceChanged(CircuitAppearanceEvent.ALL_TYPES);
 		}
@@ -92,18 +103,9 @@ public class CircuitAppearance extends Drawing {
 	
 	void recomputePorts() {
 		if (isDefault) {
-			resetDefaultAppearance();
+			recomputeDefaultAppearance();
 		} else {
 			fireCircuitAppearanceChanged(CircuitAppearanceEvent.ALL_TYPES);
-		}
-	}
-	
-	private void configureDefault(boolean value) {
-		if (isDefault != value) {
-			isDefault = value;
-			if (value) {
-				resetDefaultAppearance();
-			}
 		}
 	}
 	
@@ -116,11 +118,16 @@ public class CircuitAppearance extends Drawing {
 		}
 	}
 	
-	public void setObjects(Collection<DrawingMember> members) {
-		super.removeObjects(new ArrayList<CanvasObject>(super.getObjects()));
-		super.addObjects(members);
-		configureDefault(false);
-		recomputePorts();
+	public void setObjectsForce(Collection<? extends CanvasObject> shapes) {
+		try {
+			suppressRecompute = true;
+			super.removeObjects(new ArrayList<CanvasObject>(getObjects()));
+			super.addObjects(shapes);
+			isDefault = false;
+		} finally {
+			suppressRecompute = false;
+		}
+		fireCircuitAppearanceChanged(CircuitAppearanceEvent.ALL_TYPES);
 	}
 
 	public void paintSubcircuit(Graphics g, Direction facing) {

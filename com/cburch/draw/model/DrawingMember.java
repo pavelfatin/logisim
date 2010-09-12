@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.draw.model;
 
 import com.cburch.draw.canvas.CanvasObject;
@@ -16,7 +19,8 @@ import java.util.List;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-public abstract class DrawingMember implements AttributeSet, CanvasObject, Cloneable {
+public abstract class DrawingMember
+		implements AttributeSet, CanvasObject, Cloneable {
 	private EventSourceWeakSupport<AttributeListener> listeners;
 	
 	public DrawingMember() {
@@ -69,12 +73,12 @@ public abstract class DrawingMember implements AttributeSet, CanvasObject, Clone
 	}
 	
 	@Override
-	public Object clone() {
+	public CanvasObject clone() {
 		try {
 			DrawingMember ret = (DrawingMember) super.clone();
 			ret.listeners = new EventSourceWeakSupport<AttributeListener>();
 			return ret;
-		} catch(CloneNotSupportedException e) {
+		} catch (CloneNotSupportedException e) {
 			return null;
 		}
 	}

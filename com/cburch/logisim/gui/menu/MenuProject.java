@@ -68,6 +68,7 @@ class MenuProject extends Menu {
 	private MenuItem setAsMain = new MenuItem(this, LogisimMenuBar.SET_MAIN_CIRCUIT);
 	private MenuItem layout = new MenuItem(this, LogisimMenuBar.EDIT_LAYOUT);
 	private MenuItem appearance = new MenuItem(this, LogisimMenuBar.EDIT_APPEARANCE);
+	private MenuItem revertAppearance = new MenuItem(this, LogisimMenuBar.REVERT_APPEARANCE);
 	private MenuItem analyze = new MenuItem(this, LogisimMenuBar.ANALYZE_CIRCUIT);
 	private MenuItem stats = new MenuItem(this, LogisimMenuBar.CIRCUIT_STATS);
 	private JMenuItem options = new JMenuItem();
@@ -87,6 +88,7 @@ class MenuProject extends Menu {
 		menubar.registerItem(LogisimMenuBar.REMOVE_CIRCUIT, remove);
 		menubar.registerItem(LogisimMenuBar.EDIT_LAYOUT, layout);
 		menubar.registerItem(LogisimMenuBar.EDIT_APPEARANCE, appearance);
+		menubar.registerItem(LogisimMenuBar.REVERT_APPEARANCE, revertAppearance);
 		menubar.registerItem(LogisimMenuBar.ANALYZE_CIRCUIT, analyze);
 		menubar.registerItem(LogisimMenuBar.CIRCUIT_STATS, stats);
 		options.addActionListener(myListener);
@@ -109,6 +111,7 @@ class MenuProject extends Menu {
 		addSeparator();
 		add(layout);
 		add(appearance);
+		add(revertAppearance);
 		add(analyze);
 		add(stats);
 		addSeparator();
@@ -139,6 +142,7 @@ class MenuProject extends Menu {
 		remove.setText(Strings.get("projectRemoveCircuitItem"));
 		layout.setText(Strings.get("projectEditCircuitLayoutItem"));
 		appearance.setText(Strings.get("projectEditCircuitAppearanceItem"));
+		revertAppearance.setText(Strings.get("projectRevertAppearanceItem"));
 		analyze.setText(Strings.get("projectAnalyzeCircuitItem"));
 		stats.setText(Strings.get("projectGetCircuitStatisticsItem"));
 		options.setText(Strings.get("projectOptionsItem"));
@@ -155,6 +159,7 @@ class MenuProject extends Menu {
 				|| remove.hasListeners()
 				|| layout.hasListeners()
 				|| appearance.hasListeners()
+				|| revertAppearance.hasListeners()
 				|| analyze.hasListeners()
 				|| stats.hasListeners());
 	}

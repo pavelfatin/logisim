@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.logisim.gui.main;
 
 import java.awt.AlphaComposite;
@@ -131,11 +134,11 @@ class ProjectToolbarModel extends AbstractToolbarModel {
 	
 	@Override
 	public boolean isSelected(ToolbarItem item) {
-		String view = frame.getMainPanel().getView();
+		String view = frame.getView();
 		if (item == itemLayout) {
-			return view.equals(MainPanel.LAYOUT);
+			return view.equals(Frame.LAYOUT);
 		} else if (item == itemAppearance) {
-			return view.equals(MainPanel.APPEARANCE);
+			return view.equals(Frame.APPEARANCE);
 		} else {
 			return false;
 		}

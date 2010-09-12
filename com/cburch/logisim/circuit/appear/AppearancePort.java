@@ -1,17 +1,24 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.logisim.circuit.appear;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.util.List;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import com.cburch.logisim.data.Bounds;
 import com.cburch.logisim.data.Location;
 import com.cburch.logisim.instance.Instance;
 import com.cburch.logisim.std.base.Pin;
+import com.cburch.logisim.util.UnmodifiableList;
 
 public class AppearancePort extends AppearanceElement {
-	private static final int RADIUS = 4;
+	private static final int INPUT_RADIUS = 4;
+	private static final int OUTPUT_RADIUS = 5;
 	private static final int MINOR_RADIUS = 2;
 	public static final Color COLOR = Color.BLUE;
 	
@@ -32,10 +39,11 @@ public class AppearancePort extends AppearanceElement {
 		Location loc = getLocation();
 		Location pinLoc = pin.getLocation();
 		Element ret = doc.createElement("circ-port");
-		ret.setAttribute("x", "" + (loc.getX() - RADIUS));
-		ret.setAttribute("y", "" + (loc.getY() - RADIUS));
-		ret.setAttribute("width", "" + 2 * RADIUS);
-		ret.setAttribute("height", "" + 2 * RADIUS);
+		int r = isInput() ? INPUT_RADIUS : OUTPUT_RADIUS;
+		ret.setAttribute("x", "" + (loc.getX() - r));
+		ret.setAttribute("y", "" + (loc.getY() - r));
+		ret.setAttribute("width", "" + 2 * r);
+		ret.setAttribute("height", "" + 2 * r);
 		ret.setAttribute("pin", "" + pinLoc.getX() + "," + pinLoc.getY());
 		return ret;
 	}
@@ -48,9 +56,32 @@ public class AppearancePort extends AppearanceElement {
 		pin = value;
 	}
 	
-	@Override
-	protected int getRadius() {
-		return RADIUS;
+	private boolean isInput() {
+		Instance p = pin;
+		return p == null || Pin.FACTORY.isInputPin(p);
+	}
+	
+	public Bounds getBounds() {
+		int r = isInput() ? INPUT_RADIUS : OUTPUT_RADIUS;
+		return super.getBounds(r);
+	}
+	
+	public boolean contains(Location loc) {
+		if (isInput()) {
+			return getBounds().contains(loc);
+		} else {
+			return super.isInCircle(loc, OUTPUT_RADIUS);
+		}
+	}
+
+	public List<Location> getHandles(Location handle, int dx, int dy) {
+		Location loc = getLocation();
+		
+		int r = isInput() ? INPUT_RADIUS : OUTPUT_RADIUS;
+		return UnmodifiableList.create(new Location[] {
+				loc.translate(-r, -r), loc.translate(r, -r),
+				loc.translate(r, r), loc.translate(-r, r),
+		});
 	}
 
 	@Override
@@ -59,10 +90,12 @@ public class AppearancePort extends AppearanceElement {
 		int x = location.getX();
 		int y = location.getY();
 		g.setColor(COLOR);
-		if (Pin.FACTORY.isInputPin(pin)) {
-			g.drawRect(x - RADIUS, y - RADIUS, 2 * RADIUS, 2 * RADIUS);
+		if (isInput()) {
+			int r = INPUT_RADIUS;
+			g.drawRect(x - r, y - r, 2 * r, 2 * r);
 		} else {
-			g.drawOval(x - RADIUS, y - RADIUS, 2 * RADIUS, 2 * RADIUS);
+			int r = OUTPUT_RADIUS;
+			g.drawOval(x - r, y - r, 2 * r, 2 * r);
 		}
 		g.fillOval(x - MINOR_RADIUS, y - MINOR_RADIUS, 2 * MINOR_RADIUS, 2 * MINOR_RADIUS);
 	}

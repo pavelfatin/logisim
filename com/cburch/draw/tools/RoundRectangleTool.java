@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.draw.tools;
 
 import java.awt.Graphics;
@@ -12,7 +15,7 @@ import com.cburch.draw.model.DrawingAttributeSet;
 import com.cburch.logisim.data.Attribute;
 import com.cburch.logisim.util.Icons;
 
-class RoundRectangleTool extends RectangularTool {
+public class RoundRectangleTool extends RectangularTool {
 	private DrawingAttributeSet attrs;
 	
 	public RoundRectangleTool(DrawingAttributeSet attrs) {
@@ -36,11 +39,13 @@ class RoundRectangleTool extends RectangularTool {
 
 	@Override
 	public void drawShape(Graphics g, int x, int y, int w, int h) {
-		g.drawRoundRect(x, y, w, h, 10, 10);
+		int r = 2 * attrs.getValue(DrawAttr.CORNER_RADIUS).intValue();
+		g.drawRoundRect(x, y, w, h, r, r);
 	}
 
 	@Override
 	public void fillShape(Graphics g, int x, int y, int w, int h) {
-		g.fillRoundRect(x, y, w, h, 10, 10);
+		int r = 2 * attrs.getValue(DrawAttr.CORNER_RADIUS).intValue();
+		g.fillRoundRect(x, y, w, h, r, r);
 	}
 }

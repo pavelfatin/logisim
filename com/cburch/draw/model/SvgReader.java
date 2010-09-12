@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.draw.model;
 
 import java.awt.Color;
@@ -30,6 +33,18 @@ public class SvgReader {
 			return null;
 		}
 		List<Attribute<?>> attrs = ret.getAttributes();
+		if (attrs.contains(DrawAttr.PAINT_TYPE)) {
+			String stroke = elt.getAttribute("stroke");
+			String fill = elt.getAttribute("fill");
+			if (stroke.equals("") || stroke.equals("none")) {
+				ret.setValue(DrawAttr.PAINT_TYPE, DrawAttr.PAINT_FILL);
+			} else if (fill.equals("") || fill.equals("none")) {
+				ret.setValue(DrawAttr.PAINT_TYPE, DrawAttr.PAINT_STROKE);
+			} else {
+				ret.setValue(DrawAttr.PAINT_TYPE, DrawAttr.PAINT_STROKE_FILL);
+			}
+		}
+		attrs = ret.getAttributes(); // since changing paintType could change it
 		if (attrs.contains(DrawAttr.STROKE_WIDTH) && elt.hasAttribute("stroke-width")) {
 			Integer width = Integer.valueOf(elt.getAttribute("stroke-width"));
 			ret.setValue(DrawAttr.STROKE_WIDTH, width);
@@ -37,12 +52,16 @@ public class SvgReader {
 		if (attrs.contains(DrawAttr.STROKE_COLOR)) {
 			String color = elt.getAttribute("stroke");
 			String opacity = elt.getAttribute("stroke-opacity");
-			ret.setValue(DrawAttr.STROKE_COLOR, getColor(color, opacity));
+			if (!color.equals("none")) {
+				ret.setValue(DrawAttr.STROKE_COLOR, getColor(color, opacity));
+			}
 		}
 		if (attrs.contains(DrawAttr.FILL_COLOR)) {
 			String color = elt.getAttribute("fill");
 			String opacity = elt.getAttribute("fill-opacity");
-			ret.setValue(DrawAttr.FILL_COLOR, getColor(color, opacity));
+			if (!color.equals("none")) {
+				ret.setValue(DrawAttr.FILL_COLOR, getColor(color, opacity));
+			}
 		}
 		return ret;
 	}

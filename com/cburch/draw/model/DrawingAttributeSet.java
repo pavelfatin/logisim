@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.draw.model;
 
 import com.cburch.logisim.data.Attribute;
@@ -56,7 +59,7 @@ public class DrawingAttributeSet implements AttributeSet, Cloneable {
 			ret.values = new ArrayList<Object>(this.values);
 			ret.selectedAttrs = new ArrayList<Attribute<?>>(this.selectedAttrs);
 			return ret;
-		} catch(CloneNotSupportedException e) {
+		} catch (CloneNotSupportedException e) {
 			return null;
 		}
 	}

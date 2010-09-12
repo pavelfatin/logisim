@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.draw.tools;
 
 import java.util.List;
@@ -12,7 +15,7 @@ import com.cburch.logisim.data.Attribute;
 import com.cburch.logisim.data.Location;
 import com.cburch.logisim.util.Icons;
 
-class PolylineTool extends PolyTool {
+public class PolylineTool extends PolyTool {
 	private DrawingAttributeSet attrs;
 	
 	public PolylineTool(DrawingAttributeSet attrs) {

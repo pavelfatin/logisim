@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.draw.model;
 
 import java.awt.Color;
@@ -29,6 +32,39 @@ abstract class Poly extends DrawingMember {
 		strokeColor = Color.BLACK;
 	}
 	
+	@Override
+	public boolean equals(Object other) {
+		if (other instanceof Poly) {
+			Poly that = (Poly) other;
+			if (this.locations.length != that.locations.length) return false;
+			for (int i = 0, n = this.locations.length; i < n; i++) {
+				if (!this.locations[i].equals(that.locations[i])) return false;
+			}
+			return this.strokeWidth == that.strokeWidth
+				&& this.strokeColor.equals(that.strokeColor);
+		} else {
+			return false;
+		}
+	}
+	
+	@Override
+	public int hashCode() {
+		int ret = strokeWidth * 31 + strokeColor.hashCode();
+		for (Location loc : this.locations) {
+			ret = (ret * 31 + loc.getX()) * 31 + loc.getY();
+		}
+		return ret;
+	}
+	
+	@Override
+	public Poly clone() {
+		Poly ret = (Poly) super.clone();
+		ret.locations = this.locations.clone();
+		ret.xs = this.xs.clone();
+		ret.ys = this.ys.clone();
+		return ret;
+	}
+	
 	public List<Location> getVertices() {
 		return UnmodifiableList.create(locations);
 	}
@@ -36,9 +72,9 @@ abstract class Poly extends DrawingMember {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <V> V getValue(Attribute<V> attr) {
-		if(attr == DrawAttr.STROKE_COLOR) {
+		if (attr == DrawAttr.STROKE_COLOR) {
 			return (V) strokeColor;
-		} else if(attr == DrawAttr.STROKE_WIDTH) {
+		} else if (attr == DrawAttr.STROKE_WIDTH) {
 			return (V) Integer.valueOf(strokeWidth);
 		} else {
 			return null;
@@ -47,9 +83,9 @@ abstract class Poly extends DrawingMember {
 	
 	@Override
 	public void updateValue(Attribute<?> attr, Object value) {
-		if(attr == DrawAttr.STROKE_COLOR) {
+		if (attr == DrawAttr.STROKE_COLOR) {
 			strokeColor = (Color) value;
-		} else if(attr == DrawAttr.STROKE_WIDTH) {
+		} else if (attr == DrawAttr.STROKE_WIDTH) {
 			strokeWidth = ((Integer) value).intValue();
 		}
 	}
@@ -103,7 +139,7 @@ abstract class Poly extends DrawingMember {
 		Location[] newLocs = new Location[oldLocs.length + 1];
 		Location addedHandle = null;
 		for(int i = 0; i < newLocs.length; i++) {
-			if(addedHandle != null) {
+			if (addedHandle != null) {
 				newLocs[i] = oldLocs[i - 1];
 			} else if (oldLocs[i].equals(handle)) { // this is what we're removing
 				if (desiredLocation == null) {
@@ -136,7 +172,7 @@ abstract class Poly extends DrawingMember {
 		Location[] newLocs = new Location[oldLocs.length - 1];
 		Location ret = null;
 		for(int i = 0; i < oldLocs.length; i++) {
-			if(ret != null) {
+			if (ret != null) {
 				newLocs[i - 1] = oldLocs[i];
 			} else if (oldLocs[i].equals(handle)) {
 				ret = oldLocs[(i + (oldLocs.length - 1)) % oldLocs.length];
@@ -197,7 +233,7 @@ abstract class Poly extends DrawingMember {
 		int yq = loc.getY();
 		Location[] locs = locations;
 		double min = Double.MAX_VALUE;
-		if(locs.length > 0) {
+		if (locs.length > 0) {
 			Location first = locs[0];
 			int x0 = first.getX();
 			int y0 = first.getY();
@@ -206,7 +242,7 @@ abstract class Poly extends DrawingMember {
 				int x1 = next.getX();
 				int y1 = next.getY();
 				double d = Line2D.ptLineDistSq(x0, y0, x1, y1, xq, yq);
-				if(d < min) min = d;
+				if (d < min) min = d;
 				x0 = x1;
 				y0 = y1;
 			}

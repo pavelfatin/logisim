@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.draw.model;
 
 import java.awt.Graphics;
@@ -17,6 +20,22 @@ class RoundRectangle extends Rectangular {
 		this.radius = 10;
 	}
 	
+	@Override
+	public boolean equals(Object other) {
+		if (other instanceof RoundRectangle) {
+			RoundRectangle that = (RoundRectangle) other;
+			return super.equals(other) && this.radius == that.radius;
+		} else {
+			return false;
+		}
+	}
+	
+	@Override
+	public int hashCode() {
+		return super.hashCode() * 31 + radius;
+	}
+
+	
 	public String getDisplayName() {
 		return Strings.get("shapeRoundRect");
 	}
@@ -34,7 +53,7 @@ class RoundRectangle extends Rectangular {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <V> V getValue(Attribute<V> attr) {
-		if(attr == DrawAttr.CORNER_RADIUS) {
+		if (attr == DrawAttr.CORNER_RADIUS) {
 			return (V) Integer.valueOf(radius);
 		} else {
 			return super.getValue(attr);
@@ -43,7 +62,7 @@ class RoundRectangle extends Rectangular {
 
 	@Override
 	public void updateValue(Attribute<?> attr, Object value) {
-		if(attr == DrawAttr.CORNER_RADIUS) {
+		if (attr == DrawAttr.CORNER_RADIUS) {
 			radius = ((Integer) value).intValue();
 		} else {
 			super.updateValue(attr, value);
@@ -55,20 +74,16 @@ class RoundRectangle extends Rectangular {
 		int qx = q.getX();
 		int qy = q.getY();
 		int r = radius + getStrokeWidth() / 2;
-		if(qx >= x && qx < x + w && qy >= y && qy < y + h) {
-			if(qx < x + r) {
-				if(qy < y + r) return inCircle(qx, qy, x + r, y + r, r);
-				else if(qy < y + h - r) return true;
-				else return inCircle(qx, qy, x + r, y + h - r, r);
-			} else if(qx < x + w - r) {
-				return true;
-			} else {
-				if(qy < y + r) return inCircle(qx, qy, x + w - r, y + r, r);
-				else if(qy < y + h - r) return true;
-				else return inCircle(qx, qy, x + w - r, y + h - r, r);
-			}
+		if (qx < x + r) {
+			if (qy < y + r) return inCircle(qx, qy, x + r, y + r, r);
+			else if (qy < y + h - r) return true;
+			else return inCircle(qx, qy, x + r, y + h - r, r);
+		} else if (qx < x + w - r) {
+			return true;
 		} else {
-			return false;
+			if (qy < y + r) return inCircle(qx, qy, x + w - r, y + r, r);
+			else if (qy < y + h - r) return true;
+			else return inCircle(qx, qy, x + w - r, y + h - r, r);
 		}
 	}
 	
@@ -81,7 +96,7 @@ class RoundRectangle extends Rectangular {
 	@Override
 	public void draw(Graphics g, int x, int y, int w, int h) {
 		int diam = 2 * radius;
-		if(setForFill(g)) g.fillRoundRect(x, y, w, h, diam, diam);
-		if(setForStroke(g)) g.drawRoundRect(x, y, w, h, diam, diam);
+		if (setForFill(g)) g.fillRoundRect(x, y, w, h, diam, diam);
+		if (setForStroke(g)) g.drawRoundRect(x, y, w, h, diam, diam);
 	}
 }

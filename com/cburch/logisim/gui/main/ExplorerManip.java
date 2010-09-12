@@ -137,7 +137,7 @@ class ExplorerManip implements Explorer.Listener {
 			if (source instanceof SubcircuitFactory) {
 				SubcircuitFactory circFact = (SubcircuitFactory) source;
 				proj.setCurrentCircuit(circFact.getSubcircuit());
-				proj.getFrame().getMainPanel().setView(MainPanel.LAYOUT);
+				proj.getFrame().setView(Frame.LAYOUT);
 				if (lastSelected != null) proj.setTool(lastSelected);
 			}
 		}

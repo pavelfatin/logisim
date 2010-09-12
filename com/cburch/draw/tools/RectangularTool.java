@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.draw.tools;
 
 import java.awt.Color;
@@ -54,28 +57,25 @@ abstract class RectangularTool extends AbstractTool {
 	
 	@Override
 	public void mouseDragged(Canvas canvas, MouseEvent e) {
-		Bounds oldBounds = currentBounds;
-		Bounds bds = updateMouse(canvas, e.getX(), e.getY(), e.getModifiersEx());
-		if (!bds.equals(oldBounds)) {
-			currentBounds = bds;
-			repaintArea(canvas, oldBounds.add(bds));
-		}
+		updateMouse(canvas, e.getX(), e.getY(), e.getModifiersEx());
 	}
 	
 	@Override
 	public void mouseReleased(Canvas canvas, MouseEvent e) {
 		if(active) {
 			Bounds oldBounds = currentBounds;
-			Bounds bds = updateMouse(canvas, e.getX(), e.getY(), e.getModifiersEx());
+			Bounds bds = computeBounds(canvas, e.getX(), e.getY(), e.getModifiersEx());
 			currentBounds = Bounds.EMPTY_BOUNDS;
 			active = false;
+			CanvasObject add = null;
 			if(bds.getWidth() != 0 && bds.getHeight() != 0) {
 				CanvasModel model = canvas.getModel();
-				CanvasObject add = createShape(bds.getX(), bds.getY(),
+				add = createShape(bds.getX(), bds.getY(),
 						bds.getWidth(), bds.getHeight());
 				canvas.doAction(new ModelAddAction(model, add));
 				repaintArea(canvas, oldBounds.add(bds));
 			}
+			canvas.toolGestureComplete(this, add);
 		}
 	}
 	
@@ -93,7 +93,16 @@ abstract class RectangularTool extends AbstractTool {
 		keyPressed(canvas, e);
 	}
 	
-	private Bounds updateMouse(Canvas canvas, int mx, int my, int mods) {
+	private void updateMouse(Canvas canvas, int mx, int my, int mods) {
+		Bounds oldBounds = currentBounds;
+		Bounds bds = computeBounds(canvas, mx, my, mods);
+		if (!bds.equals(oldBounds)) {
+			currentBounds = bds;
+			repaintArea(canvas, oldBounds.add(bds));
+		}
+	}
+	
+	private Bounds computeBounds(Canvas canvas, int mx, int my, int mods) {
 		lastMouseX = mx;
 		lastMouseY = my;
 		if(!active) {
@@ -110,10 +119,10 @@ abstract class RectangularTool extends AbstractTool {
 
 			boolean ctrlDown = (mods & MouseEvent.CTRL_DOWN_MASK) != 0;
 			if (ctrlDown) {
-				x0 = (x0 + 5) / 10 * 10;
-				y0 = (y0 + 5) / 10 * 10;
-				x1 = (x1 + 5) / 10 * 10;
-				y1 = (y1 + 5) / 10 * 10;
+				x0 = canvas.snapX(x0);
+				y0 = canvas.snapY(y0);
+				x1 = canvas.snapX(x1);
+				y1 = canvas.snapY(y1);
 			}
 			
 			boolean altDown = (mods & MouseEvent.ALT_DOWN_MASK) != 0;

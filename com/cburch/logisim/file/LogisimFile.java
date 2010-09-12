@@ -213,8 +213,12 @@ public class LogisimFile extends Library implements LibraryEventSource {
 	}
 
 	public void addCircuit(Circuit circuit) {
+		addCircuit(circuit, tools.size());
+	}
+	
+	public void addCircuit(Circuit circuit, int index) {
 		AddTool tool = new AddTool(circuit.getSubcircuitFactory());
-		tools.add(tool);
+		tools.add(index, tool);
 		if (tools.size() == 1) setMainCircuit(circuit);
 		fireEvent(LibraryEvent.ADD_TOOL, tool);
 	}

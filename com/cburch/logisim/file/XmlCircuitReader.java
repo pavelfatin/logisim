@@ -75,7 +75,7 @@ public class XmlCircuitReader extends CircuitTransaction {
 		
 		List<DrawingMember> appearance = circData.appearance;
 		if (appearance != null && !appearance.isEmpty()) {
-			dest.getAppearance().setObjects(appearance);
+			dest.getAppearance().setObjectsForce(appearance);
 		}
 	}
 

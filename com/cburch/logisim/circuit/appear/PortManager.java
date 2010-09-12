@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.logisim.circuit.appear;
 
 import java.util.ArrayList;
@@ -89,9 +92,10 @@ class PortManager {
 		// handle replacements
 		ArrayList<Instance> addsCopy = new ArrayList<Instance>(adds);
 		for (Map.Entry<Instance, Instance> entry : replaces.entrySet()) {
-			AppearancePort port = oldObjects.get(entry.getKey());
+			AppearancePort port = oldObjects.remove(entry.getKey());
 			if (port != null) {
 				port.setPin(entry.getValue());
+				oldObjects.put(entry.getValue(), port);
 			} else { // this really shouldn't happen, but just to make sure...
 				addsCopy.add(entry.getValue());
 			}
@@ -101,10 +105,12 @@ class PortManager {
 			// They're probably not really all facing east.
 			// I'm just sorting them so it works predictably.
 		for (Instance pin : addsCopy) {
-			Location loc = computeDefaultLocation(appearance, pin, oldObjects);
-			AppearancePort o = new AppearancePort(loc, pin);
-			portAdds.add(o);
-			oldObjects.put(pin, o);
+			if (!oldObjects.containsKey(pin)) {
+				Location loc = computeDefaultLocation(appearance, pin, oldObjects);
+				AppearancePort o = new AppearancePort(loc, pin);
+				portAdds.add(o);
+				oldObjects.put(pin, o);
+			}
 		}
 
 		// Now update the appearance
@@ -134,18 +140,15 @@ class PortManager {
 			DefaultAppearance.sortPinList(sameWay, facing);
 			boolean isFirst = false; 
 			Instance neighbor = null; // (preferably previous in map)
-			boolean atFirst = true;
-			boolean found = false;
 			for (Instance p : sameWay) {
 				if (p == pin) {
-					found = true;
-					isFirst = atFirst;
-					if (!atFirst) break; // neighbor is previous
+					break;
 				} else {
 					neighbor = p;
-					if (found) break; // neighbor is next
 				}
-				atFirst = false;
+			}
+			if (neighbor == null) { // pin must have been first in list
+				neighbor = sameWay.get(1);
 			}
 			int dx;
 			int dy;

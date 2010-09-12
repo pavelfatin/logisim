@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.logisim.gui.appear;
 
 import java.awt.Dimension;
@@ -11,6 +14,7 @@ import com.cburch.draw.canvas.Canvas;
 import com.cburch.draw.canvas.CanvasModel;
 import com.cburch.draw.canvas.CanvasModelEvent;
 import com.cburch.draw.canvas.CanvasModelListener;
+import com.cburch.draw.canvas.CanvasObject;
 import com.cburch.draw.canvas.CanvasTool;
 import com.cburch.draw.undo.Action;
 import com.cburch.logisim.circuit.Circuit;
@@ -34,6 +38,7 @@ public class AppearanceCanvas extends Canvas
 		}
 	}
 
+	private CanvasTool selectTool;
 	private Project proj;
 	private CircuitState circuitState;
 	private Listener listener;
@@ -42,11 +47,16 @@ public class AppearanceCanvas extends Canvas
 	private Bounds oldPreferredSize;
 	private LayoutPopupManager popupManager;
 	
-	public AppearanceCanvas() {
+	public AppearanceCanvas(CanvasTool selectTool) {
+		this.selectTool = selectTool;
 		this.grid = new GridPainter(this);
 		this.listener = new Listener();
 		this.oldPreferredSize = null;
 		setSelection(new AppearanceSelection());
+		setTool(selectTool);
+
+		CanvasModel model = super.getModel();
+		if (model != null) model.addCanvasModelListener(listener);
 	}
 	
 	@Override
@@ -55,12 +65,24 @@ public class AppearanceCanvas extends Canvas
 		super.setTool(value);
 	}
 	
-	public void setCanvasModel(CanvasModel value) {
+	@Override
+	public void toolGestureComplete(CanvasTool tool, CanvasObject created) {
+		if (tool == getTool() && tool != selectTool) {
+			setTool(selectTool);
+			if (created != null) {
+				getSelection().clearSelected();
+				getSelection().setSelected(created, true);
+			}
+		}
+	}
+	
+	@Override
+	public void setModel(CanvasModel value, ActionDispatcher dispatcher) {
 		CanvasModel oldModel = super.getModel();
 		if (oldModel != null) {
 			oldModel.removeCanvasModelListener(listener);
 		}
-		super.setModel(value, this);
+		super.setModel(value, dispatcher);
 		if (value != null) {
 			value.addCanvasModelListener(listener);
 		}
@@ -70,7 +92,11 @@ public class AppearanceCanvas extends Canvas
 		this.proj = proj;
 		this.circuitState = circuitState;
 		Circuit circuit = circuitState.getCircuit();
-		super.setModel(circuit.getAppearance(), this);
+		setModel(circuit.getAppearance(), this);
+	}
+	
+	Project getProject() {
+		return proj;
 	}
 	
 	Circuit getCircuit() {
@@ -89,6 +115,29 @@ public class AppearanceCanvas extends Canvas
 	public void doAction(Action canvasAction) {
 		Circuit circuit = circuitState.getCircuit();
 		proj.doAction(new CanvasActionAdapter(circuit, canvasAction));
+	}
+	
+	@Override
+	public double getZoomFactor() {
+		return grid.getZoomFactor();
+	}
+	
+	@Override
+	public int snapX(int x) {
+		if (x < 0) {
+			return -((-x + 5) / 10 * 10);
+		} else {
+			return (x + 5) / 10 * 10;
+		}
+	}
+	
+	@Override
+	public int snapY(int y) {
+		if (y < 0) {
+			return -((-y + 5) / 10 * 10);
+		} else {
+			return (y + 5) / 10 * 10;
+		}
 	}
 	
 	@Override

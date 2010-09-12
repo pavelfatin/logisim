@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.draw.model;
 
 import java.awt.Color;
@@ -85,10 +88,19 @@ class SvgCreator {
 	}
 	
 	private static void populateFill(Element elt, DrawingMember shape) {
-		populateStroke(elt, shape);
-		Color fill = shape.getValue(DrawAttr.FILL_COLOR);
-		elt.setAttribute("fill", getColorString(fill));
-		elt.setAttribute("fill-opacity", getOpacityString(fill));
+		Object type = shape.getValue(DrawAttr.PAINT_TYPE);
+		if (type == DrawAttr.PAINT_FILL) {
+			elt.setAttribute("stroke", "none");
+		} else {
+			populateStroke(elt, shape);
+		}
+		if (type == DrawAttr.PAINT_STROKE) {
+			elt.setAttribute("fill", "none");
+		} else {
+			Color fill = shape.getValue(DrawAttr.FILL_COLOR);
+			elt.setAttribute("fill", getColorString(fill));
+			elt.setAttribute("fill-opacity", getOpacityString(fill));
+		}
 	}
 	
 	private static void populateStroke(Element elt, DrawingMember shape) {

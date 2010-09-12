@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.draw.canvas;
 
 import java.awt.Cursor;
@@ -24,8 +27,8 @@ class CanvasListener implements MouseListener, MouseMotionListener, KeyListener,
 	public void setTool(CanvasTool value) {
 		CanvasTool oldValue = tool;
 		if(value != oldValue) {
-			if(oldValue != null) oldValue.toolDeselected(canvas);
 			tool = value;
+			if(oldValue != null) oldValue.toolDeselected(canvas);
 			if(value != null) {
 				value.toolSelected(canvas);
 				canvas.setCursor(value.getCursor(canvas));
@@ -34,7 +37,6 @@ class CanvasListener implements MouseListener, MouseMotionListener, KeyListener,
 			}
 		}
 	}
-
 
 	public void mouseMoved(MouseEvent e) {
 		if(tool != null) tool.mouseMoved(canvas, e);

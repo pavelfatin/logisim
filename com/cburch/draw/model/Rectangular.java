@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.draw.model;
 
 import java.awt.Color;
@@ -23,6 +26,30 @@ abstract class Rectangular extends DrawingMember {
 		strokeWidth = 1;
 		strokeColor = Color.BLACK;
 		fillColor = Color.WHITE;
+	}
+	
+	@Override
+	public boolean equals(Object other) {
+		if (other instanceof Rectangular) {
+			Rectangular that = (Rectangular) other;
+			return this.bounds.equals(that.bounds)
+				&& this.paintType == that.paintType
+				&& this.strokeWidth == that.strokeWidth
+				&& this.strokeColor.equals(that.strokeColor)
+				&& this.fillColor.equals(that.fillColor);
+		} else {
+			return false;
+		}
+	}
+	
+	@Override
+	public int hashCode() {
+		int ret = bounds.hashCode();
+		ret = ret * 31 + paintType.hashCode();
+		ret = ret * 31 + strokeWidth;
+		ret = ret * 31 + strokeColor.hashCode();
+		ret = ret * 31 + fillColor.hashCode();
+		return ret;
 	}
 	
 	public int getX() {
@@ -66,11 +93,11 @@ abstract class Rectangular extends DrawingMember {
 		if (attr == DrawAttr.PAINT_TYPE) {
 			paintType = (AttributeOption) value;
 			fireAttributeListChanged();
-		} else if(attr == DrawAttr.STROKE_COLOR) {
+		} else if (attr == DrawAttr.STROKE_COLOR) {
 			strokeColor = (Color) value;
-		} else if(attr == DrawAttr.FILL_COLOR) {
+		} else if (attr == DrawAttr.FILL_COLOR) {
 			fillColor = (Color) value;
-		} else if(attr == DrawAttr.STROKE_WIDTH) {
+		} else if (attr == DrawAttr.STROKE_WIDTH) {
 			strokeWidth = ((Integer) value).intValue();
 		}
 	}
@@ -152,8 +179,8 @@ abstract class Rectangular extends DrawingMember {
 			int y0 = p0.getY();
 			int x1 = p1.getX();
 			int y1 = p1.getY();
-			if(x1 < x0) { int t = x0; x0 = x1; x1 = t; }
-			if(y1 < y0) { int t = y0; y0 = y1; y1 = t; }
+			if (x1 < x0) { int t = x0; x0 = x1; x1 = t; }
+			if (y1 < y0) { int t = y0; y0 = y1; y1 = t; }
 	
 			draw(g, x0, y0, x1 - x0, y1 - y0);
 		}
@@ -165,7 +192,19 @@ abstract class Rectangular extends DrawingMember {
 	
 	public boolean contains(Location loc) {
 		Bounds b = bounds;
-		return contains(b.getX(), b.getY(), b.getWidth(), b.getHeight(), loc);
+		int x = b.getX();
+		int y = b.getY();
+		int w = b.getWidth();
+		int h = b.getHeight();
+		int qx = loc.getX();
+		int qy = loc.getY();
+		int tol = getStrokeWidth() / 2;
+		if (qx >= x - tol && qx < x + w + tol
+				&& qy >= y - tol && qy < y + h + tol) {
+			return contains(x, y, w, h, loc);
+		} else {
+			return false;
+		}
 	}
 	
 	protected abstract boolean contains(int x, int y, int w, int h, Location q);

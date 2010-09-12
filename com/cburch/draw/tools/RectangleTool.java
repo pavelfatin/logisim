@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.draw.tools;
 
 import java.awt.Graphics;
@@ -12,7 +15,7 @@ import com.cburch.draw.model.DrawingAttributeSet;
 import com.cburch.logisim.data.Attribute;
 import com.cburch.logisim.util.Icons;
 
-class RectangleTool extends RectangularTool {
+public class RectangleTool extends RectangularTool {
 	private DrawingAttributeSet attrs;
 	
 	public RectangleTool(DrawingAttributeSet attrs) {

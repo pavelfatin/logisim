@@ -1,33 +1,45 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.logisim.gui.appear;
 
+import com.cburch.draw.canvas.Canvas;
 import com.cburch.draw.gui.AttributeManager;
 import com.cburch.draw.model.DrawingAttributeSet;
 import com.cburch.draw.toolbar.ToolbarModel;
+import com.cburch.draw.tools.SelectTool;
 import com.cburch.logisim.circuit.CircuitState;
 import com.cburch.logisim.data.AttributeSet;
 import com.cburch.logisim.gui.generic.AttributeTable;
 import com.cburch.logisim.gui.generic.CanvasPane;
 import com.cburch.logisim.gui.generic.ZoomModel;
+import com.cburch.logisim.gui.main.EditHandler;
 import com.cburch.logisim.proj.Project;
 
-public class AppearanceEditor {
+public class AppearanceView {
 	private DrawingAttributeSet attrs;
 	private AppearanceCanvas canvas;
 	private CanvasPane canvasPane;
 	private AppearanceToolbarModel toolbarModel;
 	private AttributeManager attributeManager;
 	private ZoomModel zoomModel;
+	private AppearanceEditHandler editHandler;
 	
-	public AppearanceEditor() {
+	public AppearanceView() {
 		attrs = new DrawingAttributeSet();
-		canvas = new AppearanceCanvas();
-		toolbarModel = new AppearanceToolbarModel(canvas, attrs);
-		canvas.setTool(toolbarModel.getFirstTool());
+		SelectTool selectTool = new SelectTool();
+		canvas = new AppearanceCanvas(selectTool);
+		toolbarModel = new AppearanceToolbarModel(selectTool, canvas, attrs);
 		zoomModel = new AppearanceZoomModel();
 		canvas.getGridPainter().setZoomModel(zoomModel);
 		attributeManager = null;
 		canvasPane = new CanvasPane(canvas);
 		canvasPane.setZoomModel(zoomModel);
+		editHandler = new AppearanceEditHandler(canvas);
+	}
+	
+	public Canvas getCanvas() {
+		return canvas;
 	}
 	
 	public CanvasPane getCanvasPane() {
@@ -40,6 +52,10 @@ public class AppearanceEditor {
 	
 	public ZoomModel getZoomModel() {
 		return zoomModel;
+	}
+	
+	public EditHandler getEditHandler() {
+		return editHandler;
 	}
 	
 	public AttributeSet getAttributeSet() {

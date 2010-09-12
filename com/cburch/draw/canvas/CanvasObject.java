@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.draw.canvas;
 
 import java.awt.Graphics;
@@ -9,6 +12,7 @@ import com.cburch.logisim.data.Bounds;
 import com.cburch.logisim.data.Location;
 
 public interface CanvasObject {
+	public abstract CanvasObject clone();
 	public abstract String getDisplayName();
 	public abstract AttributeSet getAttributeSet();
 	public abstract Bounds getBounds();

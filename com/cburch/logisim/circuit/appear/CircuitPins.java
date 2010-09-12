@@ -32,7 +32,8 @@ public class CircuitPins {
 		public void attributeListChanged(AttributeEvent e) { }
 		public void attributeValueChanged(AttributeEvent e) {
 			Attribute<?> attr = e.getAttribute();
-			if (attr == StdAttr.FACING) {
+			if (attr == StdAttr.FACING || attr == StdAttr.LABEL
+					|| attr == Pin.ATTR_TYPE) {
 				appearanceManager.updatePorts();
 			}
 		}

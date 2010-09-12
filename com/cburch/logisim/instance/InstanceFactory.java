@@ -38,6 +38,7 @@ import com.cburch.logisim.util.UnmodifiableList;
 public abstract class InstanceFactory extends AbstractComponentFactory {
 	private String name;
 	private StringGetter displayName;
+	private StringGetter defaultToolTip;
 	private String iconName;
 	private Icon icon;
 	private Attribute<?>[] attrs;
@@ -208,6 +209,14 @@ public abstract class InstanceFactory extends AbstractComponentFactory {
 	
 	public List<Port> getPorts() {
 		return portList;
+	}
+
+	public void setDefaultToolTip(StringGetter value) {
+		defaultToolTip = value;
+	}
+	
+	public StringGetter getDefaultToolTip() {
+		return defaultToolTip;
 	}
 	
 	public void setInstancePoker(Class<? extends InstancePoker> pokerClass) {

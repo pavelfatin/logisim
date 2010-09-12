@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.draw.model;
 
 import java.awt.Graphics;
@@ -14,6 +17,15 @@ public class Rectangle extends Rectangular {
 		super(x, y, w, h);
 	}
 	
+	@Override
+	public boolean equals(Object other) {
+		if (other instanceof Rectangle) {
+			return super.equals(other);
+		} else {
+			return false;
+		}
+	}
+
 	public String getDisplayName() {
 		return Strings.get("shapeRect");
 	}
@@ -30,9 +42,7 @@ public class Rectangle extends Rectangular {
 	
 	@Override
 	protected boolean contains(int x, int y, int w, int h, Location q) {
-		int qx = q.getX();
-		int qy = q.getY();
-		return qx >= x && qx < x + w && qy >= y && qy < y + h;
+		return true;
 	}
 	
 	@Override

@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.draw.model;
 
 import java.awt.Color;
@@ -13,7 +16,6 @@ import com.cburch.logisim.data.AttributeOption;
 import com.cburch.logisim.data.Location;
 
 class Polygon extends Poly {
-	private GeneralPath path;
 	private AttributeOption paintType;
 	private Color fillColor;
 	
@@ -21,6 +23,23 @@ class Polygon extends Poly {
 		super(locations);
 		paintType = DrawAttr.PAINT_STROKE;
 		fillColor = Color.WHITE;
+	}
+	
+	@Override
+	public boolean equals(Object other) {
+		if (other instanceof Polygon) {
+			Polygon that = (Polygon) other;
+			return super.equals(other) && this.paintType == that.paintType
+				&& this.fillColor.equals(that.fillColor);
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public int hashCode() {
+		int ret = super.hashCode() * 31 + paintType.hashCode();
+		return ret * 31 + fillColor.hashCode();
 	}
 	
 	@Override
@@ -42,7 +61,7 @@ class Polygon extends Poly {
 	public <V> V getValue(Attribute<V> attr) {
 		if (attr == DrawAttr.PAINT_TYPE) {
 			return (V) paintType;
-		} else if(attr == DrawAttr.FILL_COLOR) {
+		} else if (attr == DrawAttr.FILL_COLOR) {
 			return (V) fillColor;
 		} else {
 			return super.getValue(attr);
@@ -54,7 +73,7 @@ class Polygon extends Poly {
 		if (attr == DrawAttr.PAINT_TYPE) {
 			paintType = (AttributeOption) value;
 			fireAttributeListChanged();
-		} else if(attr == DrawAttr.FILL_COLOR) {
+		} else if (attr == DrawAttr.FILL_COLOR) {
 			fillColor = (Color) value;
 		} else {
 			super.updateValue(attr, value);
@@ -63,16 +82,15 @@ class Polygon extends Poly {
 	
 	@Override
 	public boolean contains(Location loc) {
-		if(path.contains(loc.getX(), loc.getY())) return true;
+		GeneralPath path = computePath();
+		if (path.contains(loc.getX(), loc.getY())) return true;
 		int width = getStrokeWidth();
 		return ptBorderDistSq(loc) < (width * width) / 4; 
 	}
-
-	@Override
-	protected void recomputeBounds() {
-		super.recomputeBounds();
-		List<Location> locs = getHandles(null, 0, 0);
+	
+	private GeneralPath computePath() {
 		GeneralPath newPath = new GeneralPath();
+		List<Location> locs = getVertices();
 		if (locs.size() > 0) {
 			boolean first = true;
 			for (Location loc : locs) {
@@ -84,7 +102,7 @@ class Polygon extends Poly {
 				}
 			}
 		}
-		path = newPath;
+		return newPath;
 	}
 	
 	@Override

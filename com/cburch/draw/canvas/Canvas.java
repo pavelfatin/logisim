@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.draw.canvas;
 
 import java.awt.Dimension;
@@ -36,6 +39,10 @@ public class Canvas extends JComponent {
 		return listener.getTool();
 	}
 	
+	public void toolGestureComplete(CanvasTool tool, CanvasObject created) {
+		; // nothing to do - subclass may override
+	}
+	
 	public Selection getSelection() {
 		return selection;
 	}
@@ -72,6 +79,18 @@ public class Canvas extends JComponent {
 	
 	public void repaintCanvasCoords(int x, int y, int width, int height) {
 		repaint(x, y, width, height);
+	}
+	
+	public double getZoomFactor() {
+		return 1.0; // subclass will have to override this
+	}
+	
+	public int snapX(int x) {
+		return x; // subclass will have to override this
+	}
+	
+	public int snapY(int y) {
+		return y; // subclass will have to override this
 	}
 	
 	@Override

@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.draw.gui;
 
 import java.beans.PropertyChangeEvent;
@@ -50,11 +53,11 @@ public class AttributeManager
 
 	public void valueChangeRequested(AttributeTable table, AttributeSet attrs,
 			Attribute<?> attr, Object value) {
-		if(attrs == generalAttrs) {
+		if (attrs == generalAttrs) {
 			@SuppressWarnings("unchecked")
 			Attribute<Object> a = (Attribute<Object>) attr;
 			attrs.setValue(a, value);
-		} else if(attrs == this.attrs) {
+		} else if (attrs == this.attrs) {
 			setSelectedValues(attr, value);
 		}
 	}
@@ -158,14 +161,14 @@ public class AttributeManager
 
 	public void propertyChange(PropertyChangeEvent evt) {
 		String prop = evt.getPropertyName();
-		if(prop.equals(Canvas.TOOL_PROPERTY)) {
+		if (prop.equals(Canvas.TOOL_PROPERTY)) {
 			updateToolAttributes();
 		}
 	}
 	
 	private void updateToolAttributes() {
 		Object tool = canvas.getTool();
-		if(tool instanceof AbstractTool) {
+		if (tool instanceof AbstractTool) {
 			generalAttrs.setAttributes(((AbstractTool) tool).getAttributes());
 			table.setAttributeSet(generalAttrs, this);
 		} else {

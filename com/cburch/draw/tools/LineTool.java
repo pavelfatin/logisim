@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.draw.tools;
 
 import java.awt.Color;
@@ -22,7 +25,7 @@ import com.cburch.logisim.data.Location;
 import com.cburch.logisim.util.Icons;
 import com.cburch.logisim.util.UnmodifiableList;
 
-class LineTool extends AbstractTool {
+public class LineTool extends AbstractTool {
 	private DrawingAttributeSet attrs;
 	private boolean active;
 	private Location mouseStart;
@@ -62,8 +65,8 @@ class LineTool extends AbstractTool {
 		int y = e.getY();
 		int mods = e.getModifiersEx();
 		if ((mods & InputEvent.CTRL_DOWN_MASK) != 0) {
-			x = (x + 5) / 10 * 10;
-			y = (y + 5) / 10 * 10;
+			x = canvas.snapX(x);
+			y = canvas.snapY(y);
 		}
 		Location loc = Location.create(x, y);
 		mouseStart = loc;
@@ -85,15 +88,17 @@ class LineTool extends AbstractTool {
 			updateMouse(canvas, e.getX(), e.getY(), e.getModifiersEx());
 			Location start = mouseStart;
 			Location end = mouseEnd;
+			CanvasObject add = null;
 			if(!start.equals(end)) {
 				active = false;
 				CanvasModel model = canvas.getModel();
 				List<Location> locs = UnmodifiableList.create(new Location[] {
 						start, end });
-				CanvasObject add = Drawables.createPolyline(locs, attrs);
+				add = Drawables.createPolyline(locs, attrs);
 				canvas.doAction(new ModelAddAction(model, add));
 				repaintArea(canvas);
 			}
+			canvas.toolGestureComplete(this, add);
 		}
 	}
 	
@@ -123,8 +128,8 @@ class LineTool extends AbstractTool {
 			if ((mods & InputEvent.CTRL_DOWN_MASK) != 0) {
 				int x = newEnd.getX();
 				int y = newEnd.getY();
-				x = (x + 5) / 10 * 10;
-				y = (y + 5) / 10 * 10;
+				x = canvas.snapX(x);
+				y = canvas.snapY(y);
 				newEnd = Location.create(x, y);
 			}
 			

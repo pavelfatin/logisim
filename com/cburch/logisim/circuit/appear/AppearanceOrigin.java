@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.logisim.circuit.appear;
 
 import java.awt.Color;
@@ -20,7 +23,7 @@ class AppearanceOrigin extends AppearanceElement {
 	static final List<Attribute<?>> ATTRIBUTES
 		= UnmodifiableList.create(new Attribute<?>[] { FACING });
 	
-	private static final int RADIUS = 2;
+	private static final int RADIUS = 3;
 	private static final int INDICATOR_LENGTH = 8;
 	private static final Color SYMBOL_COLOR = new Color(0, 128, 0);
 	
@@ -75,11 +78,6 @@ class AppearanceOrigin extends AppearanceElement {
 			super.updateValue(attr, value);
 		}
 	}
-	
-	@Override
-	protected int getRadius() {
-		return RADIUS;
-	}
 
 	@Override
 	public void paint(Graphics g, Location handle, int handleDx, int handleDy) {
@@ -93,17 +91,15 @@ class AppearanceOrigin extends AppearanceElement {
 		g.drawLine(e0.getX(), e0.getY(), e1.getX(), e1.getY());
 	}
 	
-	@Override
 	public Bounds getBounds() {
-		Bounds bds = super.getBounds();
+		Bounds bds = super.getBounds(RADIUS);
 		Location center = getLocation();
 		Location end = center.translate(facing, RADIUS + INDICATOR_LENGTH);
 		return bds.add(end);
 	}
 
-	@Override
 	public boolean contains(Location loc) {
-		if (super.contains(loc)) {
+		if (super.isInCircle(loc, RADIUS)) {
 			return true;
 		} else {
 			Location center = getLocation();
@@ -118,7 +114,6 @@ class AppearanceOrigin extends AppearanceElement {
 		}
 	}
 	
-	@Override
 	public List<Location> getHandles(Location handle, int dx, int dy) {
 		Location center = getLocation();
 		return UnmodifiableList.create(new Location[] {

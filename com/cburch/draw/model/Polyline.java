@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.draw.model;
 
 import java.awt.Graphics;
@@ -14,6 +17,15 @@ class Polyline extends Poly {
 		super(locations);
 	}
 	
+	@Override
+	public boolean equals(Object other) {
+		if (other instanceof Polyline) {
+			return super.equals(other);
+		} else {
+			return false;
+		}
+	}
+
 	public String getDisplayName() {
 		return Strings.get("shapePolyline");
 	}

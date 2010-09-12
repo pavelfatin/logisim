@@ -1,3 +1,6 @@
+/* Copyright (c) 2010, Carl Burch. License information is located in the
+ * com.cburch.logisim.Main source code and at www.cburch.com/logisim/. */
+
 package com.cburch.draw.model;
 
 import java.awt.Color;
@@ -35,6 +38,32 @@ class Line extends DrawingMember {
 	}
 	
 	@Override
+	public boolean equals(Object other) {
+		if (other instanceof Line) {
+			Line that = (Line) other;
+			return this.x0 == that.x0
+				&& this.y0 == that.x1
+				&& this.x1 == that.y0
+				&& this.y1 == that.y1
+				&& this.strokeWidth == that.strokeWidth
+				&& this.strokeColor.equals(that.strokeColor);
+		} else {
+			return false;
+		}
+	}
+	
+	@Override
+	public int hashCode() {
+		int ret = x0 * 31 + y0;
+		ret = ret * 31 + x1;
+		ret = ret * 31 + y1;
+		ret = ret * 31 + strokeWidth;
+		ret = ret * 31 + strokeColor.hashCode();
+		return ret;
+	}
+
+	
+	@Override
 	public Element toSvgElement(Document doc) {
 		return SvgCreator.createLine(doc, this);
 	}
@@ -59,9 +88,9 @@ class Line extends DrawingMember {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <V> V getValue(Attribute<V> attr) {
-		if(attr == DrawAttr.STROKE_COLOR) {
+		if (attr == DrawAttr.STROKE_COLOR) {
 			return (V) strokeColor;
-		} else if(attr == DrawAttr.STROKE_WIDTH) {
+		} else if (attr == DrawAttr.STROKE_WIDTH) {
 			return (V) Integer.valueOf(strokeWidth);
 		} else {
 			return null;
@@ -70,9 +99,9 @@ class Line extends DrawingMember {
 	
 	@Override
 	public void updateValue(Attribute<?> attr, Object value) {
-		if(attr == DrawAttr.STROKE_COLOR) {
+		if (attr == DrawAttr.STROKE_COLOR) {
 			strokeColor = (Color) value;
-		} else if(attr == DrawAttr.STROKE_WIDTH) {
+		} else if (attr == DrawAttr.STROKE_WIDTH) {
 			strokeWidth = ((Integer) value).intValue();
 		}
 	}
@@ -116,7 +145,7 @@ class Line extends DrawingMember {
 		int rNum = dxq0 * dx + dyq0 * dy;
 		int rDen = dx * dx + dy * dy;
 		
-		if(rNum >= 0 && rNum <= rDen) {
+		if (rNum >= 0 && rNum <= rDen) {
 			int sNum = (y0 - yq) * dx - (x0 - xq) * dy;
 			return (double) (sNum * sNum) / rDen;
 		} else {
@@ -163,7 +192,7 @@ class Line extends DrawingMember {
 	}
 	
 	public void paint(Graphics g, Location handle, int dx, int dy) {
-		if(setForStroke(g)) {
+		if (setForStroke(g)) {
 			int x0 = this.x0;
 			int y0 = this.y0;
 			int x1 = this.x1;

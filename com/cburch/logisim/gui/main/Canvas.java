@@ -787,7 +787,10 @@ public class Canvas extends JPanel
 						e = new ComponentUserEvent(this, loc.getX(), loc.getY());
 					}
 					String ret = maker.getToolTip(e);
-					if (ret != null) return ret;
+					if (ret != null) {
+						unrepairMouseEvent(event);
+						return ret;
+					}
 				}
 			}
 		}
@@ -808,13 +811,20 @@ public class Canvas extends JPanel
 
 	private void repairMouseEvent(MouseEvent e) {
 		double zoom = getZoomFactor();
-		if (zoom != 1.0) {
-			int oldx = e.getX();
-			int oldy = e.getY();
-			int newx = (int) Math.round(e.getX() / zoom);
-			int newy = (int) Math.round(e.getY() / zoom);
-			e.translatePoint(newx - oldx, newy - oldy);
-		}
+		if (zoom != 1.0) zoomEvent(e, zoom);
+	}
+	
+	private void unrepairMouseEvent(MouseEvent e) {
+		double zoom = getZoomFactor();
+		if (zoom != 1.0) zoomEvent(e, 1.0 / zoom);
+	}
+	
+	private void zoomEvent(MouseEvent e, double zoom) { 
+		int oldx = e.getX();
+		int oldy = e.getY();
+		int newx = (int) Math.round(e.getX() / zoom);
+		int newy = (int) Math.round(e.getY() / zoom);
+		e.translatePoint(newx - oldx, newy - oldy);
 	}
 
 	//

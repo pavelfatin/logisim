@@ -14,8 +14,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.WindowConstants;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import com.cburch.draw.toolbar.Toolbar;
 import com.cburch.logisim.circuit.Circuit;
@@ -26,14 +24,16 @@ import com.cburch.logisim.data.Attribute;
 import com.cburch.logisim.data.AttributeEvent;
 import com.cburch.logisim.data.AttributeListener;
 import com.cburch.logisim.data.AttributeSet;
+import com.cburch.logisim.data.AttributeSets;
 import com.cburch.logisim.data.Direction;
 import com.cburch.logisim.file.LibraryEvent;
 import com.cburch.logisim.file.LibraryListener;
 import com.cburch.logisim.file.Options;
-import com.cburch.logisim.gui.appear.AppearanceEditor;
+import com.cburch.logisim.gui.appear.AppearanceView;
 import com.cburch.logisim.gui.generic.AttributeTable;
 import com.cburch.logisim.gui.generic.AttributeTableListener;
 import com.cburch.logisim.gui.generic.CanvasPane;
+import com.cburch.logisim.gui.generic.CardPanel;
 import com.cburch.logisim.gui.generic.ZoomControl;
 import com.cburch.logisim.gui.generic.ZoomModel;
 import com.cburch.logisim.gui.menu.LogisimMenuBar;
@@ -49,11 +49,13 @@ import com.cburch.logisim.util.LocaleManager;
 import com.cburch.logisim.util.StringUtil;
 import com.cburch.logisim.util.VerticalSplitPane;
 
-public class Frame extends JFrame
-		implements LocaleListener {
+public class Frame extends JFrame implements LocaleListener {
+	public static final String LAYOUT = "layout";
+	public static final String APPEARANCE = "appearance";
+	
 	class MyProjectListener
 			implements ProjectListener, LibraryListener, CircuitListener,
-				AttributeListener, ChangeListener {
+				AttributeListener {
 		public void projectChanged(ProjectEvent event) {
 			int action = event.getAction();
 
@@ -71,13 +73,15 @@ public class Frame extends JFrame
 				attrs.addAttributeListener(this);
 				placeToolbar(attrs.getValue(Options.ATTR_TOOLBAR_LOC));
 			} else if (action == ProjectEvent.ACTION_SET_CURRENT) {
-				mainPanel.setView(MainPanel.LAYOUT);
+				setView(LAYOUT);
 				appearance.setCircuit(proj, proj.getCircuitState());
 				viewAttributes(proj.getTool());
 				computeTitle();
 			} else if (action == ProjectEvent.ACTION_SET_TOOL) {
 				if (attrTable == null) return; // for startup
-				viewAttributes((Tool) event.getOldData(), (Tool) event.getData());
+				Tool oldTool = (Tool) event.getOldData();
+				Tool newTool = (Tool) event.getData();
+				viewAttributes(oldTool, newTool, false);
 			}
 		}
 
@@ -104,20 +108,6 @@ public class Frame extends JFrame
 		public void attributeValueChanged(AttributeEvent e) {
 			if (e.getAttribute() == Options.ATTR_TOOLBAR_LOC) {
 				placeToolbar(e.getValue());
-			}
-		}
-
-		public void stateChanged(ChangeEvent e) {
-			if (e.getSource() == mainPanel) {
-				if (MainPanel.APPEARANCE.equals(mainPanel.getView())) {
-					toolbar.setToolbarModel(appearance.getToolbarModel());
-					attrTable.setAttributeSet(appearance.getAttributeSet(),
-							appearance.getAttributeManager(attrTable));
-					zoom.setZoomModel(appearance.getZoomModel());
-				} else {
-					toolbar.setToolbarModel(layoutToolbarModel);
-					zoom.setZoomModel(projectZoomModel);
-				}
 			}
 		}
 	}
@@ -165,23 +155,29 @@ public class Frame extends JFrame
 	}
 	
 	private Project         proj;
+	private MyProjectListener myProjectListener = new MyProjectListener();
 
+	// GUI elements shared between views
 	private LogisimMenuBar  menubar;
 	private MenuListener    menuListener;
 	private Toolbar         toolbar;
-	private MainPanel       mainPanel;
-	
-	private LayoutToolbarModel layoutToolbarModel;
-	private Canvas          layoutCanvas;
-	private JPanel          canvasPanel;
-	private AppearanceEditor appearance;
+	private JPanel          mainPanelSuper;
+	private CardPanel       mainPanel;
+	// left-side elements
 	private Toolbar         projectToolbar;
 	private ProjectToolbarModel projectToolbarModel;
 	private Explorer        explorer;
 	private AttributeTable  attrTable;
-	private ZoomModel       projectZoomModel;
 	private ZoomControl     zoom;
-	private MyProjectListener myProjectListener = new MyProjectListener();
+	
+	// for the Layout view
+	private LayoutToolbarModel layoutToolbarModel;
+	private Canvas          layoutCanvas;
+	private ZoomModel       layoutZoomModel;
+	private LayoutEditHandler layoutEditHandler;
+	
+	// for the Appearance view
+	private AppearanceView appearance;
 
 	public Frame(Project proj) {
 		this.proj = proj;
@@ -197,37 +193,43 @@ public class Frame extends JFrame
 		proj.getOptions().getAttributeSet().addAttributeListener(myProjectListener);
 		computeTitle();
 		
-		projectToolbarModel = new ProjectToolbarModel(this);
-		projectToolbar = new Toolbar(projectToolbarModel);
+		// set up elements for the Layout view
+		layoutToolbarModel = new LayoutToolbarModel(this, proj);
+		layoutCanvas = new Canvas(proj);
+		layoutZoomModel = new ProjectZoomModel(proj);
+		layoutCanvas.getGridPainter().setZoomModel(layoutZoomModel);
+		layoutEditHandler = new LayoutEditHandler(this);
+		
+		// set up elements for the Appearance view
+		appearance = new AppearanceView();
+		appearance.setCircuit(proj, proj.getCircuitState());
 
-		// set up menu bar
+		// set up menu bar and toolbar
 		menubar = new LogisimMenuBar(this, proj);
 		setJMenuBar(menubar);
-		menuListener = new MenuListener(this, menubar, projectToolbarModel);
-
-		// set up the content-bearing components
-		layoutToolbarModel = new LayoutToolbarModel(this, proj);
 		toolbar = new Toolbar(layoutToolbarModel);
+
+		// set up the left-side components
+		projectToolbarModel = new ProjectToolbarModel(this);
+		projectToolbar = new Toolbar(projectToolbarModel);
 		explorer = new Explorer(proj);
 		explorer.setListener(new ExplorerManip(proj, explorer));
-		canvasPanel = new JPanel(new BorderLayout());
-		layoutCanvas = new Canvas(proj);
-		appearance = new AppearanceEditor();
-		appearance.setCircuit(proj, proj.getCircuitState());
-		projectZoomModel = new ProjectZoomModel(proj);
-		layoutCanvas.getGridPainter().setZoomModel(projectZoomModel);
-		zoom = new ZoomControl(projectZoomModel);
 		attrTable = new AttributeTable(this);
+		zoom = new ZoomControl(layoutZoomModel);
 
 		// set up the central area
 		CanvasPane canvasPane = new CanvasPane(layoutCanvas);
-		canvasPane.setZoomModel(projectZoomModel);
-		mainPanel = new MainPanel();
-		mainPanel.addChangeListener(myProjectListener);
-		mainPanel.addView(MainPanel.LAYOUT, canvasPane);
-		mainPanel.addView(MainPanel.APPEARANCE, appearance.getCanvasPane());
-		mainPanel.setView(MainPanel.LAYOUT);
-		canvasPanel.add(mainPanel, BorderLayout.CENTER);
+		mainPanelSuper = new JPanel(new BorderLayout());
+		canvasPane.setZoomModel(layoutZoomModel);
+		mainPanel = new CardPanel();
+		mainPanel.addView(LAYOUT, canvasPane);
+		mainPanel.addView(APPEARANCE, appearance.getCanvasPane());
+		mainPanel.setView(LAYOUT);
+		mainPanelSuper.add(mainPanel, BorderLayout.CENTER);
+
+		// now register the menu listener
+		menuListener = new MenuListener(this, menubar, projectToolbarModel);
+		menuListener.setEditHandler(layoutEditHandler);
 
 		// set up the contents, split down the middle, with the canvas
 		// on the right and a split pane on the left containing the
@@ -241,7 +243,7 @@ public class Frame extends JFrame
 
 		VerticalSplitPane contents = new VerticalSplitPane(
 			new HorizontalSplitPane(explPanel, attrPanel, 0.5),
-			canvasPanel, 0.25);
+			mainPanelSuper, 0.25);
 
 		placeToolbar(proj.getOptions().getAttributeSet().getValue(Options.ATTR_TOOLBAR_LOC));
 		getContentPane().add(contents, BorderLayout.CENTER);
@@ -262,12 +264,12 @@ public class Frame extends JFrame
 		
 		Container contents = getContentPane();
 		contents.remove(toolbar);
-		canvasPanel.remove(toolbar);
+		mainPanelSuper.remove(toolbar);
 		if (loc == Options.TOOLBAR_HIDDEN) {
 			; // don't place value anywhere
 		} else if (loc == Options.TOOLBAR_DOWN_MIDDLE) {
 			toolbar.setOrientation(Toolbar.VERTICAL);
-			canvasPanel.add(toolbar, BorderLayout.WEST);
+			mainPanelSuper.add(toolbar, BorderLayout.WEST);
 		} else { // it is a BorderLayout constant
 			Object value;
 			if (loc == Direction.EAST)       value = BorderLayout.EAST;
@@ -307,8 +309,29 @@ public class Frame extends JFrame
 		return attrTable;
 	}
 	
-	MainPanel getMainPanel() {
-		return mainPanel;
+	public String getView() {
+		return mainPanel.getView();
+	}
+	
+	public void setView(String view) {
+		String curView = mainPanel.getView();
+		if (curView.equals(view)) return;
+		
+		mainPanel.setView(view);
+		if (view.equals(APPEARANCE)) { // appearance view
+			toolbar.setToolbarModel(appearance.getToolbarModel());
+			attrTable.setAttributeSet(appearance.getAttributeSet(),
+					appearance.getAttributeManager(attrTable));
+			zoom.setZoomModel(appearance.getZoomModel());
+			menuListener.setEditHandler(appearance.getEditHandler());
+			appearance.getCanvas().requestFocus();
+		} else { // layout view
+			toolbar.setToolbarModel(layoutToolbarModel);
+			zoom.setZoomModel(layoutZoomModel);
+			menuListener.setEditHandler(layoutEditHandler);
+			layoutCanvas.requestFocus();
+			viewAttributes(proj.getTool(), true);
+		}
 	}
 
 	public Canvas getCanvas() {
@@ -329,16 +352,24 @@ public class Frame extends JFrame
 	}
 	
 	void viewAttributes(Tool newTool) {
-		viewAttributes(null, newTool);
+		viewAttributes(null, newTool, false);
+	}
+	
+	private void viewAttributes(Tool newTool, boolean force) {
+		viewAttributes(null, newTool, force);
 	}
 
-	private void viewAttributes(Tool oldTool, Tool newTool) {
-		if (newTool == null) return;
-		AttributeSet newAttrs = newTool.getAttributeSet();
+	private void viewAttributes(Tool oldTool, Tool newTool, boolean force) {
+		AttributeSet newAttrs = null;
+		if (newTool == null) {
+			if (!force) return;
+		} else {
+			newAttrs = newTool.getAttributeSet();
+		}
 		if (newAttrs == null) {
 			AttributeSet oldAttrs = oldTool == null ? null : oldTool.getAttributeSet();
 			AttributeTableListener listen = attrTable.getAttributeTableListener();
-			if (attrTable.getAttributeSet() != oldAttrs
+			if (!force && attrTable.getAttributeSet() != oldAttrs
 					&& !(listen instanceof CircuitAttributeListener)) {
 				return;
 			}
@@ -348,6 +379,8 @@ public class Frame extends JFrame
 			if (circ != null) {
 				attrTable.setAttributeSet(circ.getStaticAttributes(),
 						new CircuitAttributeListener(proj, circ));
+			} else if (force) {
+				attrTable.setAttributeSet(AttributeSets.EMPTY, null);
 			}
 		} else {
 			attrTable.setAttributeSet(newAttrs, newTool.getAttributeTableListener(proj));

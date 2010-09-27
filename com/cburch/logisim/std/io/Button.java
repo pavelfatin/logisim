@@ -4,75 +4,90 @@
 package com.cburch.logisim.std.io;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 
 import com.cburch.logisim.circuit.Wire;
 import com.cburch.logisim.data.Attribute;
+import com.cburch.logisim.data.AttributeOption;
 import com.cburch.logisim.data.AttributeSet;
+import com.cburch.logisim.data.BitWidth;
 import com.cburch.logisim.data.Bounds;
 import com.cburch.logisim.data.Direction;
 import com.cburch.logisim.data.Location;
 import com.cburch.logisim.data.Value;
-import com.cburch.logisim.instance.Instance;
-import com.cburch.logisim.instance.InstanceDataSingleton;
-import com.cburch.logisim.instance.InstanceFactory;
-import com.cburch.logisim.instance.InstanceLogger;
-import com.cburch.logisim.instance.InstancePainter;
-import com.cburch.logisim.instance.InstancePoker;
+import com.cburch.logisim.in.ManagedInstance;
+import com.cburch.logisim.in.Painter;
+import com.cburch.logisim.in.Port;
+import com.cburch.logisim.in.StateImmutableData;
 import com.cburch.logisim.instance.InstanceState;
-import com.cburch.logisim.instance.Port;
 import com.cburch.logisim.instance.StdAttr;
+import com.cburch.logisim.tools.key.DirectionConfigurator;
 import com.cburch.logisim.util.GraphicsUtil;
+import com.sun.corba.se.spi.orbutil.fsm.StateImpl;
 
-public class Button extends InstanceFactory {
+public class Button extends ManagedInstance<StateImmutableData<Value>> {
 	private static final int DEPTH = 3;
+	
+	private Direction facing;
+	private Color color;
+	private AttributeOption labelLoc;
 
 	public Button() {
-		super("Button", Strings.getter("buttonComponent"));
-		setAttributes(new Attribute[] {
+		super("Button", Strings.getter("buttonComponent"));		
+		facing = Direction.EAST;
+		color = Color.WHITE;
+		labelLoc = Io.LABEL_CENTER;
+		
+		shareIconName("button.gif");
+		shareAttributes(new Attribute[] {
 				StdAttr.FACING, Io.ATTR_COLOR,
 				StdAttr.LABEL, Io.ATTR_LABEL_LOC,
 				StdAttr.LABEL_FONT, Io.ATTR_LABEL_COLOR
-			}, new Object[] {
-				Direction.EAST, Color.WHITE,
-				"", Io.LABEL_CENTER,
-				StdAttr.DEFAULT_LABEL_FONT, Color.BLACK
 			});
-		setFacingAttribute(StdAttr.FACING);
-		setIconName("button.gif");
-		setPorts(new Port[] { new Port(0, 0, Port.OUTPUT, 1) });
-		setInstancePoker(Poker.class);
-		setInstanceLogger(Logger.class);
-	}
-
-	@Override
-	public Bounds getOffsetBounds(AttributeSet attrs) {
-		Direction facing = attrs.getValue(StdAttr.FACING);
-		return Bounds.create(-20, -10, 20, 20).rotate(Direction.EAST, facing, 0, 0);
-	}
-
-	@Override
-	protected void configureNewInstance(Instance instance) {
-		instance.addAttributeListener();
-		computeTextField(instance);
+		shareAttributeAffects(StdAttr.FACING, BOUNDS | LABEL);
+		shareAttributeAffects(Io.ATTR_COLOR, APPEARANCE);
+		shareAttributeAffects(Io.ATTR_LABEL_LOC, LABEL);
+		shareLabelAttributes(StdAttr.LABEL, StdAttr.LABEL_FONT,
+				Io.ATTR_LABEL_COLOR);
+		shareKeyConfigurator(new DirectionConfigurator(StdAttr.FACING, 0));
+		sharePoker(Poker.class);
+		shareLogger(Logger.class);
 	}
 	
 	@Override
-	protected void instanceAttributeChanged(Instance instance, Attribute<?> attr) {
-		if (attr == StdAttr.FACING) {
-			instance.recomputeBounds();
-			computeTextField(instance);
-		} else if (attr == Io.ATTR_LABEL_LOC) {
-			computeTextField(instance);
-		}
+	protected Object retrieveValue(Attribute<?> attr) {
+		if (attr == StdAttr.FACING) return facing;
+		if (attr == Io.ATTR_COLOR) return color;
+		if (attr == Io.ATTR_LABEL_LOC) return labelLoc;
+		return null;
+	}
+	
+	@Override
+	protected void updateValue(Attribute<?> attr, Object value) {
+		if (attr == StdAttr.FACING) facing = (Direction) value;
+		if (attr == Io.ATTR_COLOR) color = (Color) value;
+		if (attr == Io.ATTR_LABEL_LOC) labelLoc = (AttributeOption) value;
+	}
+	
+	@Override
+	protected Bounds computeBounds() {
+		Bounds base = Bounds.create(-20, -10, 20, 20);
+		return base.rotate(Direction.EAST, facing, 0, 0);
 	}
 
-	private void computeTextField(Instance instance) {
-		Direction facing = instance.getAttributeValue(StdAttr.FACING);
-		Object labelLoc = instance.getAttributeValue(Io.ATTR_LABEL_LOC);
+	@Override
+	protected Port[] computePorts() {
+		return new Port[] { newOutput(0, 0, BitWidth.ONE) };
+	}
 
-		Bounds bds = instance.getBounds();
+	@Override
+	protected void computeLabel() {
+		Direction facing = this.facing;
+		Object labelLoc = this.labelLoc;
+
+		Bounds bds = getBounds();
 		int x = bds.getX() + bds.getWidth() / 2;
 		int y = bds.getY() + bds.getHeight() / 2;
 		int halign = GraphicsUtil.H_CENTER;
@@ -103,37 +118,32 @@ public class Button extends InstanceFactory {
 			}
 		}
 		
-		instance.setTextField(StdAttr.LABEL, StdAttr.LABEL_FONT,
-				x, y, halign, valign);
-	}
-
-	@Override
-	public void propagate(InstanceState state) {
-		InstanceDataSingleton data = (InstanceDataSingleton) state.getData();
-		Value val = data == null ? Value.FALSE : (Value) data.getValue();
-		state.setPort(0, val, 1);
+		setLabelLocation(x, y, halign, valign);
 	}
 	
 	@Override
-	public void paintInstance(InstancePainter painter) {
-		Bounds bds = painter.getBounds();
+	public StateImmutableData<Value> createState() {
+		return new StateImmutableData<Value>(this, Value.FALSE);
+	}
+	
+	@Override
+	public void propagate(StateImmutableData<Value> state) {
+		state.setPort(0, state.getData(), 1);
+	}
+	
+	@Override
+	public void paintInstance(Painter painter, StateImmutableData<Value> state) {
+		Bounds bds = getBounds();
 		int x = bds.getX();
 		int y = bds.getY();
 		int w = bds.getWidth();
 		int h = bds.getHeight();
-
-		Value val;
-		if (painter.getShowState()) {
-			InstanceDataSingleton data = (InstanceDataSingleton) painter.getData();
-			val = data == null ? Value.FALSE : (Value) data.getValue();
-		} else {
-			val = Value.FALSE;
-		}
 		
-		Color color = painter.getAttributeValue(Io.ATTR_COLOR);
-		if (!painter.shouldDrawColor()) {
-			int hue = (color.getRed() + color.getGreen() + color.getBlue()) / 3;
-			color = new Color(hue, hue, hue);
+		Value val = painter.shouldShowState() ? state.getData() : Value.FALSE;
+		Color col = color;
+		if (painter.shouldShowColor()) {
+			int lumin = (col.getRed() + col.getGreen() + col.getBlue()) / 3;
+			color = new Color(lumin, lumin, lumin);
 		}
 		
 		Graphics g = painter.getGraphics();
@@ -141,7 +151,7 @@ public class Button extends InstanceFactory {
 		if (val == Value.TRUE) {
 			x += DEPTH;
 			y += DEPTH;
-			Object labelLoc = painter.getAttributeValue(Io.ATTR_LABEL_LOC);
+			Object labelLoc = this.labelLoc;
 			if (labelLoc == Io.LABEL_CENTER || labelLoc == Direction.NORTH
 					|| labelLoc == Direction.WEST) {
 				depress = DEPTH;
@@ -149,15 +159,12 @@ public class Button extends InstanceFactory {
 				depress = 0;
 			}
 			
-			Object facing = painter.getAttributeValue(StdAttr.FACING);
+			Object facing = this.facing;
 			if (facing == Direction.NORTH || facing == Direction.WEST) {
-				Location p = painter.getLocation();
-				int px = p.getX();
-				int py = p.getY();
 				GraphicsUtil.switchToWidth(g, Wire.WIDTH);
 				g.setColor(Value.TRUE_COLOR);
-				if (facing == Direction.NORTH) g.drawLine(px, py, px, py + 10);
-				else                          g.drawLine(px, py, px + 10, py);
+				if (facing == Direction.NORTH) g.drawLine(0, 0, 0, 10);
+				else                           g.drawLine(0, 0, 10, 0);
 				GraphicsUtil.switchToWidth(g, 1);
 			}
 			
@@ -180,44 +187,33 @@ public class Button extends InstanceFactory {
 		}
 		
 		g.translate(depress, depress);
-		g.setColor(painter.getAttributeValue(Io.ATTR_LABEL_COLOR));
 		painter.drawLabel();
 		g.translate(-depress, -depress);
 		painter.drawPorts();
 	}
 	
-	public static class Poker extends InstancePoker {
+	public static class Poker extends InstancePoker<StateImmutableData<Value>> {
 		@Override
-		public void mousePressed(InstanceState state, MouseEvent e) {
-			setValue(state, Value.TRUE);
+		public void mousePressed(MouseEvent e, StateImmutableData<Value> state) {
+			state.setData(Value.TRUE);
 		}
 		
 		@Override
-		public void mouseReleased(InstanceState state, MouseEvent e) {
-			setValue(state, Value.FALSE);
-		}
-		
-		private void setValue(InstanceState state, Value val) {
-			InstanceDataSingleton data = (InstanceDataSingleton) state.getData();
-			if (data == null) {
-				state.setData(new InstanceDataSingleton(val));
-			} else {
-				data.setValue(val);
-			}
-			state.getInstance().fireInvalidated();
+		public void mouseReleased(MouseEvent e, StateImmutableData<Value> state) {
+			state.setData(Value.FALSE);
 		}
 	}
 
-	public static class Logger extends InstanceLogger {
+	public static class Logger extends InstanceLogger<StateImmutableData<Value>> {
 		@Override
-		public String getLogName(InstanceState state, Object option) {
-			return state.getAttributeValue(StdAttr.LABEL);
+		public String getLogName(StateImmutableData<Value> state, Object option) {
+			Button instance = (Button) state.getInstance();
+			return instance.label;
 		}
 
 		@Override
-		public Value getLogValue(InstanceState state, Object option) {
-			InstanceDataSingleton data = (InstanceDataSingleton) state.getData();
-			return data == null ? Value.FALSE : (Value) data.getValue();
+		public Value getLogValue(StateImmutableData<Value> state, Object option) {
+			return state.getData();
 		}
 	}
 }

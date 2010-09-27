@@ -74,16 +74,16 @@ public class TtyInterface {
 		
 		Project proj = new Project(file);
 		Circuit circuit = file.getMainCircuit();
-		Map<Component,String> pinNames = Analyze.getPinLabels(circuit);
+		Map<Instance, String> pinNames = Analyze.getPinLabels(circuit);
 		ArrayList<Instance> outputPins = new ArrayList<Instance>();
 		Instance haltPin = null;
-		for (Component pinComp : pinNames.keySet()) {
-			Instance pinInstance = Instance.getInstanceFor(pinComp);
-			String pinName = pinNames.get(pinComp);
-			if (!Pin.FACTORY.isInputPin(pinInstance)) {
-				outputPins.add(pinInstance);
+		for (Map.Entry<Instance, String> entry : pinNames.entrySet()) {
+			Instance pin = entry.getKey();
+			String pinName = entry.getValue();
+			if (!Pin.FACTORY.isInputPin(pin)) {
+				outputPins.add(pin);
 				if (pinName.equals("halt")) {
-					haltPin = pinInstance;
+					haltPin = pin;
 				}
 			}
 		}
@@ -123,15 +123,20 @@ public class TtyInterface {
 		for (FileStatistics.Count count : stats.getCounts()) {
 			Library lib = count.getLibrary();
 			String libName = lib == null ? "-" : lib.getDisplayName();
-			System.out.printf(fmtNormal, count.getUniqueCount(), //OK
-					count.getRecursiveCount(),
+			System.out.printf(fmtNormal, //OK
+					Integer.valueOf(count.getUniqueCount()),
+					Integer.valueOf(count.getRecursiveCount()),
 					count.getFactory().getDisplayName(), libName);
 		}
 		FileStatistics.Count totalWithout = stats.getTotalWithoutSubcircuits();
-		System.out.printf(fmt + "%s\n", totalWithout.getUniqueCount(), //OK
-				totalWithout.getRecursiveCount(), Strings.get("statsTotalWithout"));
-		System.out.printf(fmt + "%s\n", total.getUniqueCount(), //OK
-				total.getRecursiveCount(), Strings.get("statsTotalWith"));
+		System.out.printf(fmt + "%s\n", //OK
+				Integer.valueOf(totalWithout.getUniqueCount()),
+				Integer.valueOf(totalWithout.getRecursiveCount()),
+				Strings.get("statsTotalWithout"));
+		System.out.printf(fmt + "%s\n", //OK
+				Integer.valueOf(total.getUniqueCount()),
+				Integer.valueOf(total.getRecursiveCount()),
+				Strings.get("statsTotalWith"));
 	}
 	
 	private static int countDigits(int num) {
@@ -325,6 +330,7 @@ public class TtyInterface {
 			}
 		}
 		
+		@Override
 		public void run() {
 			InputStreamReader stdin = new InputStreamReader(System.in);
 			char[] buffer = new char[32];
@@ -335,7 +341,7 @@ public class TtyInterface {
 						char[] add = new char[nbytes];
 						System.arraycopy(buffer, 0, add, 0, nbytes);
 						synchronized (queue) {
-						    queue.addLast(add);
+							queue.addLast(add);
 						}
 					}
 				} catch (IOException e) { }

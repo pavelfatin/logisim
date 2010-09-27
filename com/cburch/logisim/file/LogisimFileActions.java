@@ -80,6 +80,7 @@ public class LogisimFileActions {
 
 	private static class RemoveCircuit extends Action {
 		private Circuit circuit;
+		private int index;
 
 		RemoveCircuit(Circuit circuit) {
 			this.circuit = circuit;
@@ -92,12 +93,13 @@ public class LogisimFileActions {
 
 		@Override
 		public void doIt(Project proj) {
+			index = proj.getLogisimFile().getCircuits().indexOf(circuit);
 			proj.getLogisimFile().removeCircuit(circuit);
 		}
 
 		@Override
 		public void undo(Project proj) {
-			proj.getLogisimFile().addCircuit(circuit);
+			proj.getLogisimFile().addCircuit(circuit, index);
 		}
 	}
 
@@ -291,8 +293,8 @@ public class LogisimFileActions {
 						Object srcValue = srcAttrs.getValue(attr);
 						Object dstValue = dstAttrs.getValue(attr);
 						if (!dstValue.equals(srcValue)) {
-						    dstAttrs.setValue(attr, srcValue);
-						    attrValues.add(new RevertAttributeValue(dstAttrs, attr, dstValue));
+							dstAttrs.setValue(attr, srcValue);
+							attrValues.add(new RevertAttributeValue(dstAttrs, attr, dstValue));
 						}
 					}
 				}

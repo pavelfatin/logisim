@@ -23,6 +23,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import com.cburch.draw.model.AbstractCanvasObject;
 import com.cburch.logisim.LogisimVersion;
 import com.cburch.logisim.Main;
 import com.cburch.logisim.circuit.Circuit;
@@ -32,7 +33,6 @@ import com.cburch.logisim.comp.ComponentFactory;
 import com.cburch.logisim.data.Attribute;
 import com.cburch.logisim.data.AttributeDefaultProvider;
 import com.cburch.logisim.data.AttributeSet;
-import com.cburch.logisim.tools.AddTool;
 import com.cburch.logisim.tools.Library;
 import com.cburch.logisim.tools.Tool;
 import com.cburch.logisim.util.InputEventUtil;
@@ -53,17 +53,17 @@ class XmlWriter {
 		try {
 			tfFactory.setAttribute("indent-number", Integer.valueOf(2));
 		} catch (IllegalArgumentException e) { }
-        Transformer tf = tfFactory.newTransformer();
-        tf.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-        tf.setOutputProperty(OutputKeys.INDENT, "yes");
-        try {
-        	tf.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", 
-        			"2");
-        } catch (IllegalArgumentException e) { }
+		Transformer tf = tfFactory.newTransformer();
+		tf.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+		tf.setOutputProperty(OutputKeys.INDENT, "yes");
+		try {
+			tf.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", 
+					"2");
+		} catch (IllegalArgumentException e) { }
 
-        Source src = new DOMSource(doc);
-        Result dest = new StreamResult(out);
-        tf.transform(src, dest);
+		Source src = new DOMSource(doc);
+		Result dest = new StreamResult(out);
+		tf.transform(src, dest);
 	}
 
 	private LogisimFile file;
@@ -100,8 +100,7 @@ class XmlWriter {
 		ret.appendChild(fromMouseMappings());
 		ret.appendChild(fromToolbarData());
 
-		for (AddTool tool : file.getTools()) {
-			Circuit circ = (Circuit) tool.getFactory();
+		for (Circuit circ : file.getCircuits()) {
 			ret.appendChild(fromCircuit(circ));
 		}
 		return ret;
@@ -195,6 +194,18 @@ class XmlWriter {
 		Element ret = doc.createElement("circuit");
 		ret.setAttribute("name", circuit.getName());
 		addAttributeSetContent(ret, circuit.getStaticAttributes(), null);
+		if (!circuit.getAppearance().isDefaultAppearance()) {
+			Element appear = doc.createElement("appear");
+			for (Object o : circuit.getAppearance().getObjectsFromBottom()) {
+				if (o instanceof AbstractCanvasObject) {
+					Element elt = ((AbstractCanvasObject) o).toSvgElement(doc);
+					if (elt != null) {
+						appear.appendChild(elt);
+					}
+				}
+			}
+			ret.appendChild(appear);
+		}
 		for (Wire w : circuit.getWires()) {
 			ret.appendChild(fromWire(w));
 		}
@@ -253,9 +264,9 @@ class XmlWriter {
 					a.setAttribute("name", attr.getName());
 					String value = attr.toStandardString(val);
 					if (value.indexOf("\n") >= 0) {
-					    a.appendChild(doc.createTextNode(value));
+						a.appendChild(doc.createTextNode(value));
 					} else {
-					    a.setAttribute("val", attr.toStandardString(val));
+						a.setAttribute("val", attr.toStandardString(val));
 					}
 					elt.appendChild(a);
 				}

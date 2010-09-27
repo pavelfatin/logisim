@@ -20,7 +20,7 @@ import javax.swing.tree.TreePath;
 import com.cburch.logisim.circuit.CircuitEvent;
 import com.cburch.logisim.circuit.CircuitListener;
 import com.cburch.logisim.circuit.CircuitState;
-import com.cburch.logisim.circuit.Subcircuit;
+import com.cburch.logisim.circuit.SubcircuitFactory;
 import com.cburch.logisim.comp.Component;
 
 class ComponentSelector extends JTree {
@@ -31,17 +31,17 @@ class ComponentSelector extends JTree {
 	}
 
 	private class CircuitNode implements TreeNode, CircuitListener,
-			Comparator<Subcircuit> {
+			Comparator<Component> {
 		private CircuitNode parent;
 		private CircuitState circuitState;
-		private Subcircuit subcircuit;
+		private Component subcircComp;
 		private ArrayList<TreeNode> children;
 		
 		public CircuitNode(CircuitNode parent, CircuitState circuitState,
-				Subcircuit subcircuit) {
+				Component subcircComp) {
 			this.parent = parent;
 			this.circuitState = circuitState;
-			this.subcircuit = subcircuit;
+			this.subcircComp = subcircComp;
 			this.children = new ArrayList<TreeNode>();
 			circuitState.getCircuit().addCircuitListener(this);
 			computeChildren();
@@ -49,9 +49,9 @@ class ComponentSelector extends JTree {
 		
 		@Override
 		public String toString() {
-			String ret = circuitState.getCircuit().getDisplayName();
-			if (subcircuit != null) {
-				ret += subcircuit.getLocation();
+			String ret = circuitState.getCircuit().getName();
+			if (subcircComp != null) {
+				ret += subcircComp.getLocation();
 			}
 			return ret;
 		}
@@ -97,14 +97,14 @@ class ComponentSelector extends JTree {
 					for (int i = children.size() - 1; i >= 0; i--) {
 						Object o2 = children.get(i);
 						if (o2 instanceof ComponentNode) {
-						    ComponentNode n = (ComponentNode) o2;
-						    if (n.comp == o) {
-						        int[] changed = { i };
-						        children.remove(i);
-						        model.nodesWereRemoved(this, changed, new Object[] { n });
-						        children.add(i, new ComponentNode(this, n.comp));
-						        model.nodesWereInserted(this, changed);
-						    }
+							ComponentNode n = (ComponentNode) o2;
+							if (n.comp == o) {
+								int[] changed = { i };
+								children.remove(i);
+								model.nodesWereRemoved(this, changed, new Object[] { n });
+								children.add(i, new ComponentNode(this, n.comp));
+								model.nodesWereInserted(this, changed);
+							}
 						}
 					}
 				}
@@ -114,19 +114,19 @@ class ComponentSelector extends JTree {
 		// returns true if changed
 		private boolean computeChildren() {
 			ArrayList<TreeNode> newChildren = new ArrayList<TreeNode>();
-			ArrayList<Subcircuit> subcircs = new ArrayList<Subcircuit>();
+			ArrayList<Component> subcircs = new ArrayList<Component>();
 			for (Component comp : circuitState.getCircuit().getNonWires()) {
-				if (comp instanceof Subcircuit) {
-					subcircs.add((Subcircuit) comp);
+				if (comp.getFactory() instanceof SubcircuitFactory) {
+					subcircs.add(comp);
 				} else {
 					Object o = comp.getFeature(Loggable.class);
 					if (o != null) {
 						ComponentNode toAdd = null;
 						for (TreeNode o2 : children) {
-						    if (o2 instanceof ComponentNode) {
-						        ComponentNode n = (ComponentNode) o2;
-						        if (n.comp == comp) { toAdd = n; break; }
-						    }
+							if (o2 instanceof ComponentNode) {
+								ComponentNode n = (ComponentNode) o2;
+								if (n.comp == comp) { toAdd = n; break; }
+							}
 						}
 						if (toAdd == null) toAdd = new ComponentNode(this, comp);
 						newChildren.add(toAdd);
@@ -135,8 +135,9 @@ class ComponentSelector extends JTree {
 			}
 			Collections.sort(newChildren, new CompareByName());
 			Collections.sort(subcircs, this);
-			for (Subcircuit comp : subcircs) {
-				CircuitState state = comp.getSubstate(circuitState);
+			for (Component comp : subcircs) {
+				SubcircuitFactory factory = (SubcircuitFactory) comp.getFactory();
+				CircuitState state = factory.getSubstate(circuitState, comp);
 				CircuitNode toAdd = null;
 				for (TreeNode o : children) {
 					if (o instanceof CircuitNode) {
@@ -158,9 +159,14 @@ class ComponentSelector extends JTree {
 			}
 		}
 		
-		public int compare(Subcircuit a, Subcircuit b) {
-			int ret = a == b ? 0 : a.getFactory().getDisplayName().compareToIgnoreCase(b.getFactory().getDisplayName());
-			return ret != 0 ? ret : a.getLocation().toString().compareTo(b.getLocation().toString());
+		public int compare(Component a, Component b) {
+			if (a != b) {
+				String aName = a.getFactory().getDisplayName();
+				String bName = b.getFactory().getDisplayName();
+				int ret = aName.compareToIgnoreCase(bName);
+				if (ret != 0) return ret;
+			}
+			return a.getLocation().toString().compareTo(b.getLocation().toString());
 		}
 	}
 	
@@ -283,7 +289,7 @@ class ComponentSelector extends JTree {
 				ComponentIcon icon = new ComponentIcon(node.comp);
 				if (node.getChildCount() > 0) {
 					icon.setTriangleState(expanded
-						    ? ComponentIcon.TRIANGLE_OPEN : ComponentIcon.TRIANGLE_CLOSED);
+							? ComponentIcon.TRIANGLE_OPEN : ComponentIcon.TRIANGLE_CLOSED);
 				}
 				((JLabel) ret).setIcon(icon);
 			}
@@ -341,10 +347,10 @@ class ComponentSelector extends JTree {
 				for (CircuitNode cur = n.parent; cur != null; cur = cur.parent) {
 					count++;
 				}
-				Subcircuit[] nPath = new Subcircuit[count - 1];
+				Component[] nPath = new Component[count - 1];
 				CircuitNode cur = n.parent;
 				for (int j = nPath.length - 1; j >= 0; j--) {
-					nPath[j] = cur.subcircuit;
+					nPath[j] = cur.subcircComp;
 					cur = cur.parent;
 				}
 				ret.add(new SelectionItem(logModel, nPath, n.comp, opt));

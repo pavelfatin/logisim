@@ -24,7 +24,7 @@ import com.cburch.logisim.data.AttributeSet;
 import com.cburch.logisim.data.Bounds;
 import com.cburch.logisim.data.Location;
 import com.cburch.logisim.file.Options;
-import com.cburch.logisim.gui.main.AttributeTableListener;
+import com.cburch.logisim.gui.generic.AttributeTableListener;
 import com.cburch.logisim.gui.main.Canvas;
 import com.cburch.logisim.gui.main.Selection;
 import com.cburch.logisim.gui.main.SelectionActions;
@@ -163,7 +163,7 @@ public class SelectTool extends Tool {
 						Location loc0 = w.getEnd0();
 						Location loc1 = w.getEnd1();
 						g.drawLine(loc0.getX(), loc0.getY(),
-						        loc1.getX(), loc1.getY());
+								loc1.getX(), loc1.getY());
 					}
 					GraphicsUtil.switchToWidth(g, 1);
 					g.setColor(COLOR_UNMATCHED);
@@ -342,8 +342,8 @@ public class SelectTool extends Tool {
 					if (connect) {
 						MoveGesture gesture = moveGesture;
 						if (gesture == null) {
-						    gesture = new MoveGesture(new MoveRequestHandler(canvas),
-						            canvas.getCircuit(), canvas.getSelection().getAnchoredComponents());
+							gesture = new MoveGesture(new MoveRequestHandler(canvas),
+									canvas.getCircuit(), canvas.getSelection().getAnchoredComponents());
 						}
 						canvas.setErrorMessage(new ComputingMessage(dx, dy), COLOR_COMPUTING);
 						MoveResult result = gesture.forceRequest(dx, dy);
@@ -400,9 +400,9 @@ public class SelectTool extends Tool {
 	}
 	
 	private void processKeyEvent(Canvas canvas, KeyEvent e, int type) {
-		HashMap<Component,KeyConfigurator> handlers = keyHandlers;
+		HashMap<Component, KeyConfigurator> handlers = keyHandlers;
 		if (handlers == null) {
-			handlers = new HashMap<Component,KeyConfigurator>();
+			handlers = new HashMap<Component, KeyConfigurator>();
 			Selection sel = canvas.getSelection();
 			for (Component comp : sel.getComponents()) {
 				ComponentFactory factory = comp.getFactory();
@@ -420,7 +420,7 @@ public class SelectTool extends Tool {
 			boolean consume = false;
 			ArrayList<KeyConfigurationResult> results;
 			results = new ArrayList<KeyConfigurationResult>();
-			for (Map.Entry<Component,KeyConfigurator> entry : handlers.entrySet()) {
+			for (Map.Entry<Component, KeyConfigurator> entry : handlers.entrySet()) {
 				Component comp = entry.getKey();
 				KeyConfigurator handler = entry.getValue();
 				KeyConfigurationEvent event = new KeyConfigurationEvent(type,

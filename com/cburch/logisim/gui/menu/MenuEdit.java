@@ -45,9 +45,15 @@ class MenuEdit extends Menu {
 	private MenuItem cut    = new MenuItem(this, LogisimMenuBar.CUT);
 	private MenuItem copy   = new MenuItem(this, LogisimMenuBar.COPY);
 	private MenuItem paste  = new MenuItem(this, LogisimMenuBar.PASTE);
-	private MenuItem clear  = new MenuItem(this, LogisimMenuBar.DELETE);
+	private MenuItem delete = new MenuItem(this, LogisimMenuBar.DELETE);
 	private MenuItem dup    = new MenuItem(this, LogisimMenuBar.DUPLICATE);
 	private MenuItem selall = new MenuItem(this, LogisimMenuBar.SELECT_ALL);
+	private MenuItem raise = new MenuItem(this, LogisimMenuBar.RAISE);
+	private MenuItem lower = new MenuItem(this, LogisimMenuBar.LOWER);
+	private MenuItem raiseTop = new MenuItem(this, LogisimMenuBar.RAISE_TOP);
+	private MenuItem lowerBottom = new MenuItem(this, LogisimMenuBar.LOWER_BOTTOM);
+	private MenuItem addCtrl = new MenuItem(this, LogisimMenuBar.ADD_CONTROL);
+	private MenuItem remCtrl = new MenuItem(this, LogisimMenuBar.REMOVE_CONTROL);
 	private MyListener myListener = new MyListener();
 
 	public MenuEdit(LogisimMenuBar menubar) {
@@ -62,21 +68,38 @@ class MenuEdit extends Menu {
 			KeyEvent.VK_C, menuMask));
 		paste.setAccelerator(KeyStroke.getKeyStroke(
 			KeyEvent.VK_V, menuMask));
-		clear.setAccelerator(KeyStroke.getKeyStroke(
+		delete.setAccelerator(KeyStroke.getKeyStroke(
 				KeyEvent.VK_DELETE, 0));
 		dup.setAccelerator(KeyStroke.getKeyStroke(
 				KeyEvent.VK_D, menuMask));
 		selall.setAccelerator(KeyStroke.getKeyStroke(
-			KeyEvent.VK_A, menuMask));
+				KeyEvent.VK_A, menuMask));
+		raise.setAccelerator(KeyStroke.getKeyStroke(
+				KeyEvent.VK_UP, menuMask));
+		lower.setAccelerator(KeyStroke.getKeyStroke(
+				KeyEvent.VK_DOWN, menuMask));
+		raiseTop.setAccelerator(KeyStroke.getKeyStroke(
+				KeyEvent.VK_UP, menuMask | KeyEvent.SHIFT_DOWN_MASK));
+		lowerBottom.setAccelerator(KeyStroke.getKeyStroke(
+				KeyEvent.VK_DOWN, menuMask | KeyEvent.SHIFT_DOWN_MASK));
 
 		add(undo);
 		addSeparator();
 		add(cut);
 		add(copy);
 		add(paste);
-		add(clear);
+		addSeparator();
+		add(delete);
 		add(dup);
 		add(selall);
+		addSeparator();
+		add(raise);
+		add(lower);
+		add(raiseTop);
+		add(lowerBottom);
+		addSeparator();
+		add(addCtrl);
+		add(remCtrl);
 		
 		Project proj = menubar.getProject();
 		if (proj != null) {
@@ -88,9 +111,15 @@ class MenuEdit extends Menu {
 		menubar.registerItem(LogisimMenuBar.CUT, cut);
 		menubar.registerItem(LogisimMenuBar.COPY, copy);
 		menubar.registerItem(LogisimMenuBar.PASTE, paste);
-		menubar.registerItem(LogisimMenuBar.DELETE, clear);
+		menubar.registerItem(LogisimMenuBar.DELETE, delete);
 		menubar.registerItem(LogisimMenuBar.DUPLICATE, dup);
 		menubar.registerItem(LogisimMenuBar.SELECT_ALL, selall);
+		menubar.registerItem(LogisimMenuBar.RAISE, raise);
+		menubar.registerItem(LogisimMenuBar.LOWER, lower);
+		menubar.registerItem(LogisimMenuBar.RAISE_TOP, raiseTop);
+		menubar.registerItem(LogisimMenuBar.LOWER_BOTTOM, lowerBottom);
+		menubar.registerItem(LogisimMenuBar.ADD_CONTROL, addCtrl);
+		menubar.registerItem(LogisimMenuBar.REMOVE_CONTROL, remCtrl);
 		computeEnabled();
 	}
 
@@ -100,9 +129,15 @@ class MenuEdit extends Menu {
 		cut.setText(Strings.get("editCutItem"));
 		copy.setText(Strings.get("editCopyItem"));
 		paste.setText(Strings.get("editPasteItem"));
-		clear.setText(Strings.get("editClearItem"));
+		delete.setText(Strings.get("editClearItem"));
 		dup.setText(Strings.get("editDuplicateItem"));
 		selall.setText(Strings.get("editSelectAllItem"));
+		raise.setText(Strings.get("editRaiseItem"));
+		lower.setText(Strings.get("editLowerItem"));
+		raiseTop.setText(Strings.get("editRaiseTopItem"));
+		lowerBottom.setText(Strings.get("editLowerBottomItem"));
+		addCtrl.setText(Strings.get("editAddControlItem"));
+		remCtrl.setText(Strings.get("editRemoveControlItem"));
 	}
 	
 	@Override
@@ -111,9 +146,15 @@ class MenuEdit extends Menu {
 				|| cut.hasListeners()
 				|| copy.hasListeners()
 				|| paste.hasListeners()
-				|| clear.hasListeners()
+				|| delete.hasListeners()
 				|| dup.hasListeners()
-				|| selall.hasListeners());
+				|| selall.hasListeners()
+				|| raise.hasListeners()
+				|| lower.hasListeners()
+				|| raiseTop.hasListeners()
+				|| lowerBottom.hasListeners()
+				|| addCtrl.hasListeners()
+				|| remCtrl.hasListeners());
 	}
 }
 

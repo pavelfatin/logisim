@@ -314,8 +314,8 @@ class MenuSimulate extends JMenu {
 	}
 
 	private void recreateStateMenus() {
-		recreateStateMenu(downStateMenu, downStateItems, KeyEvent.VK_DOWN);
-		recreateStateMenu(upStateMenu, upStateItems, KeyEvent.VK_UP);
+		recreateStateMenu(downStateMenu, downStateItems, KeyEvent.VK_RIGHT);
+		recreateStateMenu(upStateMenu, upStateItems, KeyEvent.VK_LEFT);
 	}
 	
 	private void recreateStateMenu(JMenu menu,
@@ -323,11 +323,11 @@ class MenuSimulate extends JMenu {
 		menu.removeAll();
 		menu.setEnabled(items.size() > 0);
 		boolean first = true;
+		int mask = getToolkit().getMenuShortcutKeyMask();
 		for (int i = items.size() - 1; i >= 0; i--) {
 			JMenuItem item = items.get(i);
 			menu.add(item);
 			if (first) {
-				int mask = getToolkit().getMenuShortcutKeyMask();
 				item.setAccelerator(KeyStroke.getKeyStroke(code, mask));
 				first = false;
 			} else {

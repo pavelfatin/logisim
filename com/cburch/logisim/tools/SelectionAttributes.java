@@ -20,8 +20,8 @@ import com.cburch.logisim.data.Attribute;
 import com.cburch.logisim.data.AttributeEvent;
 import com.cburch.logisim.data.AttributeListener;
 import com.cburch.logisim.data.AttributeSet;
-import com.cburch.logisim.gui.main.AttributeTable;
-import com.cburch.logisim.gui.main.AttributeTableListener;
+import com.cburch.logisim.gui.generic.AttributeTable;
+import com.cburch.logisim.gui.generic.AttributeTableListener;
 import com.cburch.logisim.gui.main.Canvas;
 import com.cburch.logisim.gui.main.CircuitAttributeListener;
 import com.cburch.logisim.gui.main.Selection;
@@ -186,7 +186,7 @@ class SelectionAttributes extends AbstractAttributeSet
 					if (next.containsAttribute(attr)) {
 						Object v = attrMap.get(attr);
 						if (v != null && !v.equals(next.getValue(attr))) {
-						    attrMap.put(attr, null);
+							attrMap.put(attr, null);
 						}
 					} else {
 						ait.remove();

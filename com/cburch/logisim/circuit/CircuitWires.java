@@ -200,10 +200,11 @@ class CircuitWires {
 	}
 
 	Bounds getWireBounds() {
-		if (bounds == Bounds.EMPTY_BOUNDS) {
-			recomputeBounds();
+		Bounds bds = bounds;
+		if (bds == Bounds.EMPTY_BOUNDS) {
+			bds = recomputeBounds();
 		}
-		return bounds;
+		return bds;
 	}
 	
 	WireBundle getWireBundle(Location query) {
@@ -344,7 +345,7 @@ class CircuitWires {
 						circState.setValueByWire(p, Value.NIL);
 					} else {
 						for (Location loc2 : pbPoints) {
-						    circState.setValueByWire(loc2, Value.NIL);
+							circState.setValueByWire(loc2, Value.NIL);
 						}
 					}
 				} else {
@@ -430,17 +431,17 @@ class CircuitWires {
 					WireBundle wb = bmap.getBundleAt(loc);
 					if (wb != null) {
 						if (!wb.isValid()) {
-						    g.setColor(Value.WIDTH_ERROR_COLOR);
+							g.setColor(Value.WIDTH_ERROR_COLOR);
 						} else if (showState) {
-						    if (!isValid) g.setColor(Value.NIL_COLOR);
-						    else         g.setColor(state.getValue(loc).getColor());
+							if (!isValid) g.setColor(Value.NIL_COLOR);
+							else         g.setColor(state.getValue(loc).getColor());
 						} else {
-						    g.setColor(Color.BLACK);
+							g.setColor(Color.BLACK);
 						}
 						if (highlighted.containsLocation(loc)) {
-						    g.fillOval(loc.getX() - 5, loc.getY() - 5, 10, 10);
+							g.fillOval(loc.getX() - 5, loc.getY() - 5, 10, 10);
 						} else {
-						    g.fillOval(loc.getX() - 4, loc.getY() - 4, 8, 8);
+							g.fillOval(loc.getX() - 4, loc.getY() - 4, 8, 8);
 						}
 					}
 				}
@@ -481,19 +482,19 @@ class CircuitWires {
 					if (icount > 2) {
 						WireBundle wb = bmap.getBundleAt(loc);
 						if (wb != null) {
-						    if (!wb.isValid()) {
-						        g.setColor(Value.WIDTH_ERROR_COLOR);
-						    } else if (showState) {
-						        if (!isValid) g.setColor(Value.NIL_COLOR);
-						        else         g.setColor(state.getValue(loc).getColor());
-						    } else {
-						        g.setColor(Color.BLACK);
-						    }
-						    if (highlighted.containsLocation(loc)) {
-						        g.fillOval(loc.getX() - 5, loc.getY() - 5, 10, 10);
-						    } else {
-						        g.fillOval(loc.getX() - 4, loc.getY() - 4, 8, 8);
-						    }
+							if (!wb.isValid()) {
+								g.setColor(Value.WIDTH_ERROR_COLOR);
+							} else if (showState) {
+								if (!isValid) g.setColor(Value.NIL_COLOR);
+								else         g.setColor(state.getValue(loc).getColor());
+							} else {
+								g.setColor(Color.BLACK);
+							}
+							if (highlighted.containsLocation(loc)) {
+								g.fillOval(loc.getX() - 5, loc.getY() - 5, 10, 10);
+							} else {
+								g.fillOval(loc.getX() - 4, loc.getY() - 4, 8, 8);
+							}
 						}
 					}
 				}
@@ -601,13 +602,13 @@ class CircuitWires {
 						int thr = spl.bit_thread[i];
 						WireBundle to_bundle = spl_data.end_bundle[j];
 						if (to_bundle.isValid()) {
-						    if (i >= from_bundle.threads.length) {
-						        throw new ArrayIndexOutOfBoundsException("from " + i + " of " + from_bundle.threads.length);
-						    }
-						    if (thr >= to_bundle.threads.length) {
-						        throw new ArrayIndexOutOfBoundsException("to " + thr + " of " + to_bundle.threads.length);
-						    }
-						    from_bundle.threads[i].unite(to_bundle.threads[thr]);
+							if (i >= from_bundle.threads.length) {
+								throw new ArrayIndexOutOfBoundsException("from " + i + " of " + from_bundle.threads.length);
+							}
+							if (thr >= to_bundle.threads.length) {
+								throw new ArrayIndexOutOfBoundsException("to " + thr + " of " + to_bundle.threads.length);
+							}
+							from_bundle.threads[i].unite(to_bundle.threads[thr]);
 						}
 					}
 				}
@@ -750,11 +751,11 @@ class CircuitWires {
 		}
 	}
 
-	private void recomputeBounds() {
+	private Bounds recomputeBounds() {
 		Iterator<Wire> it = wires.iterator();
 		if (!it.hasNext()) {
 			bounds = Bounds.EMPTY_BOUNDS;
-			return;
+			return Bounds.EMPTY_BOUNDS;
 		}
 
 		Wire w = it.next();
@@ -769,7 +770,9 @@ class CircuitWires {
 			int y0 = w.e0.getY(); if (y0 < ymin) ymin = y0;
 			int y1 = w.e1.getY(); if (y1 > ymax) ymax = y1;
 		}
-		bounds = Bounds.create(xmin, ymin,
+		Bounds bds = Bounds.create(xmin, ymin,
 			xmax - xmin + 1, ymax - ymin + 1);
+		bounds = bds;
+		return bds;
 	}
 }

@@ -15,7 +15,7 @@ public class StateClocked extends State {
 		lastClock = Value.ERROR;
 	}
 
-	public boolean setClock(Value clockValue, String trigger) {
+	public boolean setClock(Value clockValue, Object trigger) {
 		if (lastClock.equals(clockValue)) {
 			if (trigger == HIGH_LEVEL) return clockValue == Value.TRUE;
 			if (trigger == LOW_LEVEL) return clockValue == Value.FALSE;

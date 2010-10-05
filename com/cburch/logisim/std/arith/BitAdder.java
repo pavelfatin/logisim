@@ -6,13 +6,10 @@ package com.cburch.logisim.std.arith;
 import java.awt.Graphics;
 
 import com.cburch.logisim.data.Attribute;
-import com.cburch.logisim.data.AttributeSet;
 import com.cburch.logisim.data.Attributes;
 import com.cburch.logisim.data.BitWidth;
 import com.cburch.logisim.data.Bounds;
-import com.cburch.logisim.data.Location;
 import com.cburch.logisim.data.Value;
-import com.cburch.logisim.in.ManagedInstance;
 import com.cburch.logisim.in.Painter;
 import com.cburch.logisim.in.Port;
 import com.cburch.logisim.in.StatelessInstance;
@@ -20,7 +17,6 @@ import com.cburch.logisim.in.StatelessState;
 import com.cburch.logisim.instance.StdAttr;
 import com.cburch.logisim.tools.key.BitWidthConfigurator;
 import com.cburch.logisim.tools.key.IntegerConfigurator;
-import com.cburch.logisim.tools.key.JoinedConfigurator;
 import com.cburch.logisim.util.GraphicsUtil;
 
 public class BitAdder extends StatelessInstance {
@@ -80,9 +76,15 @@ public class BitAdder extends StatelessInstance {
 		}
 
 		Port[] ps = new Port[inputs + 1];
-		ps[0]   = newOutput(0, 0, BitWidth.create(outWidth));
+		Port outBase = newOutput(0, 0, BitWidth.create(outWidth));
+		if (inputs == 1) {
+			ps[0] = outBase.cloneToolTip(Strings.getter("bitAdderOutputOneTip"));
+		} else {
+			ps[0] = outBase.cloneToolTip(Strings.getter("bitAdderOutputManyTip"));
+		}
 		for (int i = 0; i < inputs; i++) {
-			ps[i + 1] = newInput(-40, y + i * dy, inWidth);
+			Port inBase = newInput(-40, y + i * dy, inWidth);
+			ps[i + 1] = inBase.cloneToolTip(Strings.getter("bitAdderInputTip"));
 		}
 		return ps;
 	}
@@ -90,7 +92,7 @@ public class BitAdder extends StatelessInstance {
 	private int computeOutputBits(int width, int inputs) {
 		int maxBits = width * inputs;
 		int outWidth = 1;
-		while ((1 << outWidth) < maxBits) outWidth++;
+		while ((1 << outWidth) <= maxBits) outWidth++;
 		return outWidth;
 	}
 
@@ -135,13 +137,11 @@ public class BitAdder extends StatelessInstance {
 	
 	@Override
 	public void paintInstance(Painter painter, StatelessState state) {
-		Graphics g = painter.getGraphics();
 		painter.drawBounds();
-		painter.drawPorts(state);
+		painter.drawPorts();
 		
+		Graphics g = painter.getGraphics();
 		GraphicsUtil.switchToWidth(g, 2);
-		int x = -10;
-		int y = 0;
 		g.drawLine(-12, -5, -12,  5);
 		g.drawLine( -8, -5,  -8,  5);
 		g.drawLine(-15, -2,  -5, -2);

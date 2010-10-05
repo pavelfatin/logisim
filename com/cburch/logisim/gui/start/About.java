@@ -11,8 +11,6 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Image;
-import java.net.URL;
 
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
@@ -26,13 +24,12 @@ import com.cburch.logisim.data.Value;
 import com.cburch.logisim.util.GraphicsUtil;
 
 public class About {
-	private static final int IMAGE_BORDER = 10;
-	private static final int IMAGE_WIDTH = 380;
-	private static final int IMAGE_HEIGHT = 284;
+	static final int IMAGE_BORDER = 10;
+	static final int IMAGE_WIDTH = 380;
+	static final int IMAGE_HEIGHT = 284;
 	
 	private static class PanelThread extends Thread {
 		private MyPanel panel;
-		private int count = 1;
 		private boolean running = true;
 		
 		PanelThread(MyPanel panel) {
@@ -41,45 +38,46 @@ public class About {
 		
 		@Override
 		public void run() {
+			long start = System.currentTimeMillis();
 			while (running) {
+				long elapse = System.currentTimeMillis() - start;
+				int count = (int) (elapse / 500) % 4;
 				panel.upper = (count == 2 || count == 3) ? Value.TRUE : Value.FALSE;
 				panel.lower = (count == 1 || count == 2) ? Value.TRUE : Value.FALSE;
-				count = (count + 1) % 4;
+				panel.credits.setScroll((int) elapse);
 				panel.repaint();
 				try {
-					Thread.sleep(500);
+					Thread.sleep(20);
 				} catch (InterruptedException ex) { }
 			}
 		}
 	}
 
 	private static class MyPanel extends JPanel implements AncestorListener {
-		private final String LOGO_LOC = "resources/logisim/hendrix.png";
 		private final Color fadeColor = new Color(255, 255, 255, 128);
 		private final Color headerColor = new Color(143, 0, 0);
-		private final Color authorColor = new Color(0, 0, 176);
 		private final Color gateColor = Color.DARK_GRAY;
 		private final Font headerFont = new Font("Monospaced", Font.BOLD, 72);
 		private final Font versionFont = new Font("Serif", Font.PLAIN | Font.ITALIC, 32);
 		private final Font copyrightFont = new Font("Serif", Font.ITALIC, 18);
-		private final Font authorFont = new Font("Serif", Font.PLAIN, 24);
-		private final Font urlFont = new Font("Serif", Font.ITALIC, 24);
 		
-		private Image logo = null;
 		private Value upper = Value.FALSE;
 		private Value lower = Value.TRUE;
+		private AboutCredits credits;
 		private PanelThread thread = null;
 
 		public MyPanel() {
-			setPreferredSize(new Dimension(IMAGE_WIDTH + 2 * IMAGE_BORDER,
-					IMAGE_HEIGHT + 2 * IMAGE_BORDER));
+			setLayout(null);
+			
+			int prefWidth = IMAGE_WIDTH + 2 * IMAGE_BORDER;
+			int prefHeight = IMAGE_HEIGHT + 2 * IMAGE_BORDER;
+			setPreferredSize(new Dimension(prefWidth, prefHeight));
 			setBackground(Color.WHITE);
 			addAncestorListener(this);
 			
-			URL url = About.class.getClassLoader().getResource(LOGO_LOC);
-			if (url != null) {
-				logo = getToolkit().createImage(url);
-			}
+			credits = new AboutCredits();
+			credits.setBounds(0, prefHeight / 2, prefWidth, prefHeight / 2);
+			add(credits);
 		}
 
 		@Override
@@ -93,7 +91,6 @@ public class About {
 				g.setColor(fadeColor);
 				g.fillRect(x, y, IMAGE_WIDTH, IMAGE_HEIGHT);
 				drawText(g, x, y);
-				if (logo != null) g.drawImage(logo, x + 330, y + 185, this);
 			} catch (Throwable t) { }
 		}
 		
@@ -220,16 +217,6 @@ public class About {
 			g.setFont(versionFont); fm = g.getFontMetrics();
 			str = "Version " + Main.VERSION_NAME;
 			g.drawString(str, x + IMAGE_WIDTH - fm.stringWidth(str), y + 75);
-			
-			g.setColor(authorColor);
-			g.setFont(authorFont); fm = g.getFontMetrics();
-			str = "Carl Burch";
-			g.drawString(str, x + (IMAGE_WIDTH - fm.stringWidth(str)) / 2, y + 224);
-			str = "Hendrix College";
-			g.drawString(str, x + (IMAGE_WIDTH - fm.stringWidth(str)) / 2, y + 251);
-			g.setFont(urlFont); fm = g.getFontMetrics();
-			str = "www.cburch.com/logisim/";
-			g.drawString(str, x + (IMAGE_WIDTH - fm.stringWidth(str)) / 2, y + 277);
 		}
 
 		public void ancestorAdded(AncestorEvent arg0) {
@@ -263,4 +250,3 @@ public class About {
 				"Logisim " + Main.VERSION_NAME, JOptionPane.PLAIN_MESSAGE);
 	}
 }
-

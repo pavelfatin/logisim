@@ -18,6 +18,7 @@ import com.cburch.logisim.circuit.Simulator;
 import com.cburch.logisim.file.LibraryEvent;
 import com.cburch.logisim.file.LibraryListener;
 import com.cburch.logisim.file.LogisimFile;
+import com.cburch.logisim.gui.appear.GenerateDetailedAppearanceAction;
 import com.cburch.logisim.gui.appear.RevertAppearanceAction;
 import com.cburch.logisim.gui.generic.CardPanel;
 import com.cburch.logisim.gui.menu.LogisimMenuItem;
@@ -140,6 +141,7 @@ class MenuListener {
 			menubar.addActionListener(LogisimMenuBar.EDIT_APPEARANCE, this);
 			menubar.addActionListener(LogisimMenuBar.VIEW_TOOLBOX, this);
 			menubar.addActionListener(LogisimMenuBar.VIEW_SIMULATION, this);
+			menubar.addActionListener(LogisimMenuBar.GENERATE_DETAILED_APPEARANCE, this);
 			menubar.addActionListener(LogisimMenuBar.REVERT_APPEARANCE, this);
 			menubar.addActionListener(LogisimMenuBar.ANALYZE_CIRCUIT, this);
 			menubar.addActionListener(LogisimMenuBar.CIRCUIT_STATS, this);
@@ -194,6 +196,8 @@ class MenuListener {
 				frame.setExplorerView(Frame.VIEW_TOOLBOX);
 			} else if (src == LogisimMenuBar.VIEW_SIMULATION) {
 				frame.setExplorerView(Frame.VIEW_SIMULATION);
+			} else if (src == LogisimMenuBar.GENERATE_DETAILED_APPEARANCE) {
+				proj.doAction(new GenerateDetailedAppearanceAction(cur));
 			} else if (src == LogisimMenuBar.REVERT_APPEARANCE) {
 				proj.doAction(new RevertAppearanceAction(cur));
 			} else if (src == LogisimMenuBar.ANALYZE_CIRCUIT) {
@@ -215,6 +219,7 @@ class MenuListener {
 			boolean canMoveUp = false;
 			boolean canMoveDown = false;
 			boolean canRemove = false;
+			boolean canGenerateDetailed = false;
 			boolean canRevert = false;
 			boolean viewAppearance = editorView.equals(Frame.EDIT_APPEARANCE);
 			boolean viewLayout = editorView.equals(Frame.EDIT_LAYOUT);
@@ -227,6 +232,7 @@ class MenuListener {
 				canMoveUp = curIndex > 0;
 				canMoveDown = curIndex < tools.size() - 1;
 				canRemove = tools.size() > 1;
+				canGenerateDetailed = viewAppearance;
 				canRevert = viewAppearance
 					&& !cur.getAppearance().isDefaultAppearance();
 			}
@@ -240,6 +246,7 @@ class MenuListener {
 			menubar.setEnabled(LogisimMenuBar.VIEW_SIMULATION, !viewSimulation);
 			menubar.setEnabled(LogisimMenuBar.EDIT_LAYOUT, !viewLayout);
 			menubar.setEnabled(LogisimMenuBar.EDIT_APPEARANCE, !viewAppearance);
+			menubar.setEnabled(LogisimMenuBar.GENERATE_DETAILED_APPEARANCE, canGenerateDetailed);
 			menubar.setEnabled(LogisimMenuBar.REVERT_APPEARANCE, canRevert);
 			menubar.setEnabled(LogisimMenuBar.ANALYZE_CIRCUIT, true);
 			menubar.setEnabled(LogisimMenuBar.CIRCUIT_STATS, true);

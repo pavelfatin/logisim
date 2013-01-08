@@ -4,11 +4,15 @@
 package com.cburch.logisim.circuit.appear;
 
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.font.FontRenderContext;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -16,6 +20,8 @@ import com.cburch.draw.model.CanvasObject;
 import com.cburch.draw.shapes.Curve;
 import com.cburch.draw.shapes.DrawAttr;
 import com.cburch.draw.shapes.Rectangle;
+import com.cburch.draw.shapes.Text;
+import com.cburch.logisim.data.AttributeOption;
 import com.cburch.logisim.data.Direction;
 import com.cburch.logisim.data.Location;
 import com.cburch.logisim.instance.Instance;
@@ -65,6 +71,15 @@ class DefaultAppearance {
 
 	
 	public static List<CanvasObject> build(Collection<Instance> pins) {
+		return build("", pins, false);
+
+	}
+
+	public static List<CanvasObject> buildDetailed(String name, Collection<Instance> pins) {
+		return build(name, pins, true);
+	}
+
+	private static List<CanvasObject> build(String name, Collection<Instance> pins, boolean showLabels) {
 		Map<Direction,List<Instance>> edge;
 		edge = new HashMap<Direction,List<Instance>>();
 		edge.put(Direction.NORTH, new ArrayList<Instance>());
@@ -89,13 +104,24 @@ class DefaultAppearance {
 		int maxVert = Math.max(numNorth, numSouth);
 		int maxHorz = Math.max(numEast, numWest);
 
-		int offsNorth = computeOffset(numNorth, numSouth, maxHorz);
-		int offsSouth = computeOffset(numSouth, numNorth, maxHorz);
-		int offsEast = computeOffset(numEast, numWest, maxVert);
-		int offsWest = computeOffset(numWest, numEast, maxVert);
-		
-		int width = computeDimension(maxVert, maxHorz);
-		int height = computeDimension(maxHorz, maxVert);
+		Rectangle2D nameBounds = boundsOf(name);
+
+		boolean nameVisible = showLabels && !name.isEmpty();
+		int nameOffset = nameVisible ? 15 + (int) nameBounds.getHeight() : 0;
+
+		int dx = 10;
+		int dy = showLabels ? 20 : 10;
+
+		int offsNorth = computeOffset(numNorth, numSouth, maxHorz, dx);
+		int offsSouth = computeOffset(numSouth, numNorth, maxHorz, dx);
+		int offsEast = nameOffset + computeOffset(numEast, numWest, maxVert, dy);
+		int offsWest = nameOffset + computeOffset(numWest, numEast, maxVert, dy);
+
+		int maxLabelWidth = Math.max((int) nameBounds.getWidth(),
+				maxLabelPairWidth(edge.get(Direction.WEST), edge.get(Direction.EAST)));
+
+		int width = computeDimension(maxVert, maxHorz, dx) + (showLabels ? maxLabelWidth + 10: 0);
+		int height = nameOffset + computeDimension(maxHorz, maxVert, dy);
 
 		// compute position of anchor relative to top left corner of box
 		int ax;
@@ -133,29 +159,80 @@ class DefaultAppearance {
 		List<CanvasObject> ret = new ArrayList<CanvasObject>();
 		ret.add(notch);
 		ret.add(rect);
+
+		if (nameVisible) {
+			int hx = rx + (width - (int) nameBounds.getWidth()) / 2;
+			int hy = ry + 20;
+			Text text = new Text(hx, hy, name);
+			text.getLabel().setFont(DrawAttr.DEFAULT_FONT.deriveFont(Font.BOLD));
+			ret.add(text);
+		}
+
 		placePins(ret, edge.get(Direction.WEST),
-				rx,             ry + offsWest,  0, 10);
+				rx,             ry + offsWest,  0, dy);
 		placePins(ret, edge.get(Direction.EAST),
-				rx + width,     ry + offsEast,  0, 10);
+				rx + width,     ry + offsEast,  0, dy);
 		placePins(ret, edge.get(Direction.NORTH),
-				rx + offsNorth, ry,            10,  0);
+				rx + offsNorth, ry,            dx,  0);
 		placePins(ret, edge.get(Direction.SOUTH),
-				rx + offsSouth, ry + height,   10,  0);
+				rx + offsSouth, ry + height,   dx,  0);
 		ret.add(new AppearanceAnchor(Location.create(rx + ax, ry + ay)));
+
+		if (showLabels) {
+			placePinLabels(ret, edge.get(Direction.WEST),
+					rx + 10, ry + offsWest + 5, 0, dy, DrawAttr.ALIGN_LEFT);
+
+			placePinLabels(ret, edge.get(Direction.EAST),
+					rx + width - 10, ry + offsEast + 5, 0, dy, DrawAttr.ALIGN_RIGHT);
+		}
+
 		return ret;
 	}
-	
-	private static int computeDimension(int maxThis, int maxOthers) {
+
+	private static int maxLabelPairWidth(List<Instance> xs, List<Instance> ys) {
+		return xs.size() >= ys.size()
+				? maxLabelPairWidth0(xs, ys)
+				: maxLabelPairWidth0(ys, xs);
+	}
+
+	private static int maxLabelPairWidth0(List<Instance> xs, List<Instance> ys) {
+		int maxWidth = 0;
+
+		Iterator<Instance> ysIterator = ys.iterator();
+
+		for (Instance x : xs) {
+			int xLabelWidth = labelWidthOf(x);
+			int yLabelWidth = ysIterator.hasNext() ? labelWidthOf(ysIterator.next()) : 0;
+
+			int pairWidth = xLabelWidth + yLabelWidth;
+
+			maxWidth = Math.max(maxWidth, pairWidth);
+		}
+
+		return maxWidth;
+	}
+
+	private static int labelWidthOf(Instance pin) {
+		return (int) boundsOf(pin.getAttributeSet().getValue(StdAttr.LABEL)).getWidth();
+	}
+
+	private static Rectangle2D boundsOf(String text) {
+		Font font = DrawAttr.DEFAULT_FONT;
+		FontRenderContext context = new FontRenderContext(null, false, false);
+		return font.getStringBounds(text, context);
+	}
+
+	private static int computeDimension(int maxThis, int maxOthers, int delta) {
 		if (maxThis < 3) {
-			return 30;
+			return maxThis == 0 ? 30 : delta * 3;
 		} else if (maxOthers == 0) {
-			return 10 * maxThis;
+			return delta * maxThis;
 		} else {
-			return 10 * maxThis + 10;
+			return delta * maxThis + 10;
 		}
 	}
 
-	private static int computeOffset(int numFacing, int numOpposite, int maxOthers) {
+	private static int computeOffset(int numFacing, int numOpposite, int maxOthers, int delta) {
 		int maxThis = Math.max(numFacing, numOpposite);
 		int maxOffs;
 		switch (maxThis) {
@@ -169,13 +246,27 @@ class DefaultAppearance {
 		default:
 			maxOffs = (maxOthers == 0 ? 5 : 10);
 		}
-		return maxOffs + 10 * ((maxThis - numFacing) / 2);
+		return maxOffs + delta * ((maxThis - numFacing) / 2);
 	}
 	
 	private static void placePins(List<CanvasObject> dest, List<Instance> pins,
 			int x, int y, int dx, int dy) {
 		for (Instance pin : pins) {
 			dest.add(new AppearancePort(Location.create(x, y), pin));
+			x += dx;
+			y += dy;
+		}
+	}
+
+	private static void placePinLabels(List<CanvasObject> dest, List<Instance> pins,
+									   int x, int y, int dx, int dy, AttributeOption align) {
+		for (Instance pin : pins) {
+			String label = pin.getAttributeSet().getValue(StdAttr.LABEL);
+			if (!label.isEmpty()) {
+				Text text = new Text(x, y, label);
+				text.getAttributeSet().setValue(DrawAttr.ALIGNMENT, align);
+				dest.add(text);
+			}
 			x += dx;
 			y += dy;
 		}

@@ -100,6 +100,11 @@ public class CircuitAppearance extends Drawing {
 		}
 	}
 	
+	public void generateDetailedAppearance() {
+		isDefault = false;
+		setObjectsForce(DefaultAppearance.buildDetailed(circuit.getName(), circuitPins.getPins()));
+	}
+
 	void recomputePorts() {
 		if (isDefault) {
 			recomputeDefaultAppearance();

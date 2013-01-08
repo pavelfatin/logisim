@@ -118,8 +118,8 @@ public class Circuit {
 	private WeakHashMap<Component, Circuit> circuitsUsingThis;
 
 	public Circuit(String name) {
-		appearance = new CircuitAppearance(this);
 		staticAttrs = CircuitAttributes.createBaseAttrs(this, name);
+		appearance = new CircuitAppearance(this);
 		subcircuitFactory = new SubcircuitFactory(this);
 		locker = new CircuitLocker();
 		circuitsUsingThis = new WeakHashMap<Component, Circuit>();

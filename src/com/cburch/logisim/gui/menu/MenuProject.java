@@ -46,6 +46,7 @@ class MenuProject extends Menu {
 	private MenuItemImpl moveDown = new MenuItemImpl(this, LogisimMenuBar.MOVE_CIRCUIT_DOWN);
 	private MenuItemImpl remove = new MenuItemImpl(this, LogisimMenuBar.REMOVE_CIRCUIT);
 	private MenuItemImpl setAsMain = new MenuItemImpl(this, LogisimMenuBar.SET_MAIN_CIRCUIT);
+	private MenuItemImpl generateDetailedAppearance = new MenuItemImpl(this, LogisimMenuBar.GENERATE_DETAILED_APPEARANCE);
 	private MenuItemImpl revertAppearance = new MenuItemImpl(this, LogisimMenuBar.REVERT_APPEARANCE);
 	private MenuItemImpl layout = new MenuItemImpl(this, LogisimMenuBar.EDIT_LAYOUT);
 	private MenuItemImpl appearance = new MenuItemImpl(this, LogisimMenuBar.EDIT_APPEARANCE);
@@ -67,6 +68,7 @@ class MenuProject extends Menu {
 		menubar.registerItem(LogisimMenuBar.MOVE_CIRCUIT_DOWN, moveDown);
 		menubar.registerItem(LogisimMenuBar.SET_MAIN_CIRCUIT, setAsMain);
 		menubar.registerItem(LogisimMenuBar.REMOVE_CIRCUIT, remove);
+		menubar.registerItem(LogisimMenuBar.GENERATE_DETAILED_APPEARANCE, generateDetailedAppearance);
 		menubar.registerItem(LogisimMenuBar.REVERT_APPEARANCE, revertAppearance);
 		menubar.registerItem(LogisimMenuBar.EDIT_LAYOUT, layout);
 		menubar.registerItem(LogisimMenuBar.EDIT_APPEARANCE, appearance);
@@ -88,6 +90,7 @@ class MenuProject extends Menu {
 		add(moveDown);
 		add(setAsMain);
 		add(remove);
+		add(generateDetailedAppearance);
 		add(revertAppearance);
 		addSeparator();
 		add(viewToolbox);
@@ -122,6 +125,7 @@ class MenuProject extends Menu {
 		moveDown.setText(Strings.get("projectMoveCircuitDownItem"));
 		setAsMain.setText(Strings.get("projectSetAsMainItem"));
 		remove.setText(Strings.get("projectRemoveCircuitItem"));
+		generateDetailedAppearance.setText(Strings.get("projectGenerateDetailedAppearanceItem"));
 		revertAppearance.setText(Strings.get("projectRevertAppearanceItem"));
 		layout.setText(Strings.get("projectEditCircuitLayoutItem"));
 		appearance.setText(Strings.get("projectEditCircuitAppearanceItem"));
@@ -141,6 +145,7 @@ class MenuProject extends Menu {
 				|| setAsMain.hasListeners()
 				|| remove.hasListeners()
 				|| layout.hasListeners()
+				|| generateDetailedAppearance.hasListeners()
 				|| revertAppearance.hasListeners()
 				|| appearance.hasListeners()
 				|| viewToolbox.hasListeners()

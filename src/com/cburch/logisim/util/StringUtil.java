@@ -3,11 +3,31 @@
 
 package com.cburch.logisim.util;
 
+import java.util.Collection;
+
 public class StringUtil {
 	private StringUtil() { }
 	
 	public static String capitalize(String a) {
 		return Character.toTitleCase(a.charAt(0)) + a.substring(1);
+	}
+
+	public static String join(Collection<String> strings, String delimiter) {
+		StringBuilder builder = new StringBuilder();
+
+		boolean first = true;
+
+		for (String string : strings) {
+			if (first) {
+				first = false;
+			} else {
+				builder.append(delimiter);
+			}
+
+			builder.append(string);
+		}
+
+		return builder.toString();
 	}
 
 	public static String format(String fmt, String a1) {

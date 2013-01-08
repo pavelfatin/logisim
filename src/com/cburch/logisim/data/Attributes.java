@@ -6,16 +6,29 @@ package com.cburch.logisim.data;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
+import java.awt.BorderLayout;
 
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import com.bric.swing.ColorPicker;
 import com.cburch.logisim.util.FontUtil;
 import com.cburch.logisim.util.JInputComponent;
 import com.cburch.logisim.util.StringGetter;
+import com.cburch.logisim.util.StringUtil;
 import com.connectina.swing.fontchooser.JFontChooser;
 
 public class Attributes {
@@ -35,6 +48,10 @@ public class Attributes {
 	//
 	public static Attribute<String> forString(String name) {
 		return forString(name, getter(name));
+	}
+
+	public static Attribute<List<String>> forList(String name) {
+		return new ListAttribute(name, getter(name));
 	}
 
 	public static Attribute<?> forOption(String name,
@@ -92,6 +109,10 @@ public class Attributes {
 	//
 	public static Attribute<String> forString(String name, StringGetter disp) {
 		return new StringAttribute(name, disp);
+	}
+
+	public static Attribute<List<String>> forList(String name, StringGetter disp) {
+		return new ListAttribute(name, disp);
 	}
 
 	public static <V> Attribute<V> forOption(String name, StringGetter disp,
@@ -152,6 +173,126 @@ public class Attributes {
 		@Override
 		public String parse(String value) {
 			return value;
+		}
+	}
+
+	private static class ListAttribute extends Attribute<List<String>> {
+		static final String DELIMITER = ";";
+
+		public ListAttribute(String name, StringGetter disp) {
+			super(name, disp);
+		}
+
+		@Override
+		public List<String> parse(String value) {
+			return value.isEmpty()
+					? Collections.<String>emptyList()
+					: Arrays.asList(value.split(DELIMITER));
+		}
+
+		@Override
+		public String toStandardString(List<String> value) {
+			return StringUtil.join(value, DELIMITER);
+		}
+
+		@Override
+		public String toDisplayString(List<String> value) {
+			return value.isEmpty()
+					? ""
+					: String.format("[%d]", nonEmptyLineCount(value));
+		}
+
+		private static int nonEmptyLineCount(List<String> lines) {
+			int c = 0;
+			for (String line : lines) {
+				if (!line.isEmpty()) {
+					c++;
+				}
+			}
+			return c;
+		}
+
+		@Override
+		protected Component getCellEditor(List<String> value) {
+			return new ListEditor(value);
+		}
+	}
+
+	private static class ListEditor extends JPanel implements JInputComponent {
+		private JTextArea numbers = new JTextArea();
+		private JTextArea lines = new JTextArea();
+
+		ListEditor(List<String> value) {
+			numbers.setBackground(Color.LIGHT_GRAY);
+			numbers.setColumns(3);
+			numbers.setEditable(false);
+			numbers.setFocusable(false);
+			numbers.setBorder(new EmptyBorder(0, 5, 0, 5));
+
+			lines.setColumns(15);
+			lines.setRows(15);
+			lines.getDocument().addDocumentListener(new LinesListener());
+
+			JScrollPane pane = new JScrollPane();
+			pane.getViewport().add(lines);
+			pane.setRowHeaderView(numbers);
+			pane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+
+			setLayout(new BorderLayout());
+			add(pane, BorderLayout.CENTER);
+
+			setValue(value);
+			updateLineNumbers();
+		}
+
+		public Object getValue() {
+			String text = lines.getText()
+					.replaceAll(ListAttribute.DELIMITER, "")
+					.replaceAll("\\s+$", "");
+
+			return text.isEmpty()
+					? Collections.emptyList()
+					: trim(Arrays.asList(text.split("\\n")));
+		}
+
+		private static List<String> trim(List<String> strings) {
+			List<String> result = new ArrayList<String>(strings.size());
+			for (String string : strings) {
+				result.add(string.trim());
+			}
+			return result;
+		}
+
+		public void setValue(Object value) {
+			List<String> list = (List<String>) value;
+			lines.setText(StringUtil.join(list, "\n"));
+		}
+
+		private void updateLineNumbers() {
+			String text = lines.getText();
+			int count = text.split("\\n", -1).length;
+			numbers.setText(formatLineNumbers(count));
+		}
+
+		private static String formatLineNumbers(int count) {
+			StringBuilder builder = new StringBuilder();
+			for (int i = 0; i < count; i++) {
+				builder.append(i).append("\n");
+			}
+			return builder.toString();
+		}
+
+		private class LinesListener implements DocumentListener {
+			public void insertUpdate(DocumentEvent documentEvent) {
+				updateLineNumbers();
+			}
+
+			public void removeUpdate(DocumentEvent documentEvent) {
+				updateLineNumbers();
+			}
+
+			public void changedUpdate(DocumentEvent documentEvent) {
+			}
 		}
 	}
 

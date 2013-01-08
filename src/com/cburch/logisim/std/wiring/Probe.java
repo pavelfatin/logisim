@@ -5,6 +5,7 @@ package com.cburch.logisim.std.wiring;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.util.List;
 
 import com.cburch.logisim.circuit.RadixOption;
 import com.cburch.logisim.comp.TextField;
@@ -113,6 +114,10 @@ public class Probe extends InstanceFactory {
 			}
 		} else {
 			paintValue(painter, value);
+
+			if (value.getWidth() > 0) {
+				paintLegend(painter, value);
+			}
 		}
 
 		painter.drawPorts();
@@ -162,6 +167,31 @@ public class Probe extends InstanceFactory {
 		}
 	}
 	
+	static void paintLegend(InstancePainter painter, Value value) {
+		Graphics g = painter.getGraphics();
+		Bounds bds = painter.getBounds();
+
+		List<String> values = painter.getAttributeValue(ProbeAttributes.LEGEND_ATTRIBUTE);
+
+		if (!values.isEmpty()) {
+			int index = value.toIntValue();
+
+			boolean known = index < values.size() && !values.get(index).isEmpty();
+
+			String text = known ? values.get(index) : Strings.get("probeLegendUnknown");
+
+			int x = bds.getX() + bds.getWidth() / 2;
+			int y = bds.getY() + bds.getHeight() / 2;
+
+			Direction facing = painter.getAttributeValue(StdAttr.FACING);
+			int shift = facing == Direction.NORTH ? 20 : -25;
+
+			g.setColor(known ? Color.BLACK : Color.RED);
+
+			GraphicsUtil.drawCenteredText(g, text, x, y + shift);
+		}
+	}
+
 	//
 	// methods for instances
 	//

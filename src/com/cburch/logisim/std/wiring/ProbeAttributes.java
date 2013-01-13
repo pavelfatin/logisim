@@ -22,9 +22,13 @@ class ProbeAttributes extends AbstractAttributeSet {
 	public static final Attribute<List<String>> LEGEND_ATTRIBUTE =
 			Attributes.forList("legend", Strings.getter("probeLegendAttr"));
 
-	private static final List<Attribute<?>> ATTRIBUTES
+    public static final Attribute<Font> LEGEND_FONT_ATTRIBUTE
+            = Attributes.forFont("legendfont", Strings.getter("probeLegendFontAttr"));
+
+    private static final List<Attribute<?>> ATTRIBUTES
 		= Arrays.asList(new Attribute<?>[] {
-			StdAttr.FACING, RadixOption.ATTRIBUTE, LEGEND_ATTRIBUTE,
+			StdAttr.FACING, RadixOption.ATTRIBUTE,
+            LEGEND_ATTRIBUTE, LEGEND_FONT_ATTRIBUTE,
 			StdAttr.LABEL, Pin.ATTR_LABEL_LOC, StdAttr.LABEL_FONT,
 		});
 
@@ -35,6 +39,7 @@ class ProbeAttributes extends AbstractAttributeSet {
 	RadixOption radix = RadixOption.RADIX_2;
 	BitWidth width = BitWidth.ONE;
 	List<String> legend = Collections.emptyList();
+    Font legendfont = StdAttr.DEFAULT_LABEL_FONT;
 
 	public ProbeAttributes() { }
 
@@ -57,6 +62,7 @@ class ProbeAttributes extends AbstractAttributeSet {
 		if (attr == StdAttr.LABEL_FONT) return (E) labelfont;
 		if (attr == RadixOption.ATTRIBUTE) return (E) radix;
 		if (attr == LEGEND_ATTRIBUTE) return (E) legend;
+		if (attr == LEGEND_FONT_ATTRIBUTE) return (E) legendfont;
 		return null;
 	}
 
@@ -74,6 +80,8 @@ class ProbeAttributes extends AbstractAttributeSet {
 			radix = (RadixOption) value;
 		} else if (attr == LEGEND_ATTRIBUTE) {
 			legend = (List<String>) value;
+		} else if (attr == LEGEND_FONT_ATTRIBUTE) {
+			legendfont = (Font) value;
 		} else {
 			throw new IllegalArgumentException("unknown attribute");
 		}

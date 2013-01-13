@@ -4,6 +4,7 @@
 package com.cburch.logisim.std.wiring;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.util.List;
 
@@ -187,6 +188,9 @@ public class Probe extends InstanceFactory {
 			int shift = facing == Direction.NORTH ? 20 : -25;
 
 			g.setColor(known ? Color.BLACK : Color.RED);
+
+            Font font = painter.getAttributeValue(ProbeAttributes.LEGEND_FONT_ATTRIBUTE);
+            g.setFont(font);
 
 			GraphicsUtil.drawCenteredText(g, text, x, y + shift);
 		}

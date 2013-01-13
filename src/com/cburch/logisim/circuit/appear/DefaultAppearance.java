@@ -120,7 +120,9 @@ class DefaultAppearance {
 		int maxLabelWidth = Math.max((int) nameBounds.getWidth(),
 				maxLabelPairWidth(edge.get(Direction.WEST), edge.get(Direction.EAST)));
 
-		int width = computeDimension(maxVert, maxHorz, dx) + (showLabels ? maxLabelWidth + 10: 0);
+        int additionalWidth = showLabels ? 10 + multiple(maxLabelWidth, 10) : 0;
+
+        int width = computeDimension(maxVert, maxHorz, dx) + additionalWidth;
 		int height = nameOffset + computeDimension(maxHorz, maxVert, dy);
 
 		// compute position of anchor relative to top left corner of box
@@ -187,6 +189,10 @@ class DefaultAppearance {
 		}
 
 		return ret;
+	}
+
+    private static int multiple(int value, int n) {
+        return (int) Math.ceil((float) value / (float) n) * n;
 	}
 
 	private static int maxLabelPairWidth(List<Instance> xs, List<Instance> ys) {

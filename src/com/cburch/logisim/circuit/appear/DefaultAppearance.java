@@ -112,10 +112,10 @@ class DefaultAppearance {
 		int dx = 10;
 		int dy = showLabels ? 20 : 10;
 
-		int offsNorth = computeOffset(numNorth, numSouth, maxHorz, dx);
-		int offsSouth = computeOffset(numSouth, numNorth, maxHorz, dx);
-		int offsEast = nameOffset + computeOffset(numEast, numWest, maxVert, dy);
-		int offsWest = nameOffset + computeOffset(numWest, numEast, maxVert, dy);
+		int offsNorth = computeOffset(numNorth, numSouth, maxHorz, dx, false);
+		int offsSouth = computeOffset(numSouth, numNorth, maxHorz, dx, false);
+		int offsEast = nameOffset + computeOffset(numEast, numWest, maxVert, dy, !showLabels);
+		int offsWest = nameOffset + computeOffset(numWest, numEast, maxVert, dy, !showLabels);
 
 		int maxLabelWidth = Math.max((int) nameBounds.getWidth(),
 				maxLabelPairWidth(edge.get(Direction.WEST), edge.get(Direction.EAST)));
@@ -238,7 +238,7 @@ class DefaultAppearance {
 		}
 	}
 
-	private static int computeOffset(int numFacing, int numOpposite, int maxOthers, int delta) {
+	private static int computeOffset(int numFacing, int numOpposite, int maxOthers, int delta, boolean center) {
 		int maxThis = Math.max(numFacing, numOpposite);
 		int maxOffs;
 		switch (maxThis) {
@@ -252,7 +252,7 @@ class DefaultAppearance {
 		default:
 			maxOffs = (maxOthers == 0 ? 5 : 10);
 		}
-		return maxOffs + delta * ((maxThis - numFacing) / 2);
+		return center ? maxOffs + delta * ((maxThis - numFacing) / 2) : maxOffs;
 	}
 	
 	private static void placePins(List<CanvasObject> dest, List<Instance> pins,

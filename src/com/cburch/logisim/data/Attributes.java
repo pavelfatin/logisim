@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.bric.swing.ColorPicker;
+import com.cburch.logisim.instance.StdAttr;
 import com.cburch.logisim.util.FontUtil;
 import com.cburch.logisim.util.JInputComponent;
 import com.cburch.logisim.util.StringGetter;
@@ -214,7 +215,7 @@ public class Attributes {
 
 		@Override
 		protected Component getCellEditor(List<String> value) {
-			return new ListEditor(value);
+			return new ListEditor(value, StdAttr.DEFAULT_LABEL_FONT);
 		}
 	}
 
@@ -222,16 +223,18 @@ public class Attributes {
 		private JTextArea numbers = new JTextArea();
 		private JTextArea lines = new JTextArea();
 
-		ListEditor(List<String> value) {
+		ListEditor(List<String> value, Font font) {
 			numbers.setBackground(Color.LIGHT_GRAY);
 			numbers.setColumns(3);
 			numbers.setEditable(false);
 			numbers.setFocusable(false);
 			numbers.setBorder(new EmptyBorder(0, 5, 0, 5));
+            numbers.setFont(font);
 
 			lines.setColumns(15);
 			lines.setRows(15);
 			lines.getDocument().addDocumentListener(new LinesListener());
+            lines.setFont(font);
 
 			JScrollPane pane = new JScrollPane();
 			pane.getViewport().add(lines);

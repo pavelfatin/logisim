@@ -98,6 +98,7 @@ public class OptionsFrame extends LFrame {
 		
 		panels = new OptionsPanel[] {
 				new SimulateOptions(this),
+				new AppearanceOptions(this),
 				new ToolbarOptions(this),
 				new MouseOptions(this),
 		};

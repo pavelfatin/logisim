@@ -25,11 +25,14 @@ public class Options {
 	
 	public static final Integer sim_rand_dflt = Integer.valueOf(32);
 
+    public static final Attribute<Boolean> detailed_appearance_attr
+            = Attributes.forBoolean("detailedAppearance", Strings.getter("detailedAppearanceOption"));
+
 	private static final Attribute<?>[] ATTRIBUTES = {
-			ATTR_GATE_UNDEFINED, sim_limit_attr, sim_rand_attr,
+			ATTR_GATE_UNDEFINED, sim_limit_attr, sim_rand_attr, detailed_appearance_attr
 	};
 	private static final Object[] DEFAULTS = {
-			GATE_UNDEFINED_IGNORE, Integer.valueOf(1000), Integer.valueOf(0),
+			GATE_UNDEFINED_IGNORE, Integer.valueOf(1000), Integer.valueOf(0), Boolean.valueOf(false)
 	};
 	
 	private AttributeSet attrs;

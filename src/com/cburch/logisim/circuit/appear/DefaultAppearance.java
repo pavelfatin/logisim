@@ -72,7 +72,6 @@ class DefaultAppearance {
 	
 	public static List<CanvasObject> build(Collection<Instance> pins) {
 		return build("", pins, false);
-
 	}
 
 	public static List<CanvasObject> buildDetailed(String name, Collection<Instance> pins) {

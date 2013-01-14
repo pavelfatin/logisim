@@ -17,14 +17,19 @@ import com.cburch.draw.model.CanvasModelListener;
 import com.cburch.draw.model.CanvasObject;
 import com.cburch.draw.model.Drawing;
 import com.cburch.logisim.circuit.Circuit;
+import com.cburch.logisim.circuit.CircuitEvent;
+import com.cburch.logisim.circuit.CircuitListener;
 import com.cburch.logisim.data.Bounds;
 import com.cburch.logisim.data.Direction;
 import com.cburch.logisim.data.Location;
+import com.cburch.logisim.file.Options;
+import com.cburch.logisim.gui.main.Frame;
 import com.cburch.logisim.instance.Instance;
+import com.cburch.logisim.proj.Projects;
 import com.cburch.logisim.util.EventSourceWeakSupport;
 
 public class CircuitAppearance extends Drawing {
-	private class MyListener implements CanvasModelListener {
+	private class MyCanvasListener implements CanvasModelListener {
 		public void modelChanged(CanvasModelEvent event) {
 			if (!suppressRecompute) {
 				setDefaultAppearance(false);
@@ -32,12 +37,21 @@ public class CircuitAppearance extends Drawing {
 			}
 		}
 	}
-	
+
+    private class MyCircuitListener implements CircuitListener {
+        public void circuitChanged(CircuitEvent event) {
+            if (event.getAction() == CircuitEvent.ACTION_SET_NAME &&
+                    isDetailedAppearanceEnabled()) {
+                generateDetailedAppearance();
+            }
+        }
+    }
+
 	private Circuit circuit;
 	private EventSourceWeakSupport<CircuitAppearanceListener> listeners;
 	private PortManager portManager;
 	private CircuitPins circuitPins;
-	private MyListener myListener;
+	private MyCanvasListener myListener;
 	private boolean isDefault;
 	private boolean suppressRecompute;
 	
@@ -46,13 +60,29 @@ public class CircuitAppearance extends Drawing {
 		listeners = new EventSourceWeakSupport<CircuitAppearanceListener>();
 		portManager = new PortManager(this);
 		circuitPins = new CircuitPins(portManager);
-		myListener = new MyListener();
+		myListener = new MyCanvasListener();
 		suppressRecompute = false;
-		addCanvasModelListener(myListener);
-		setDefaultAppearance(true);
+
+        circuit.addCircuitListener(new MyCircuitListener());
+        addCanvasModelListener(myListener);
+
+        if (isDetailedAppearanceEnabled()) {
+            generateDetailedAppearance();
+        } else {
+		    setDefaultAppearance(true);
+        }
 	}
-	
-	public CircuitPins getCircuitPins() {
+
+    private static Boolean isDetailedAppearanceEnabled() {
+        Frame frame = Projects.getTopFrame();
+        if (frame == null) {
+            return false;
+        }
+        Options options = frame.getProject().getOptions();
+        return options.getAttributeSet().getValue(Options.detailed_appearance_attr);
+    }
+
+    public CircuitPins getCircuitPins() {
 		return circuitPins;
 	}
 	

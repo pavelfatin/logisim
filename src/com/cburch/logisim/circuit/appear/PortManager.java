@@ -16,8 +16,10 @@ import com.cburch.draw.model.CanvasObject;
 import com.cburch.logisim.data.Bounds;
 import com.cburch.logisim.data.Direction;
 import com.cburch.logisim.data.Location;
+import com.cburch.logisim.file.Options;
 import com.cburch.logisim.instance.Instance;
 import com.cburch.logisim.instance.StdAttr;
+import com.cburch.logisim.proj.Projects;
 
 class PortManager {
 	private CircuitAppearance appearance;
@@ -29,12 +31,18 @@ class PortManager {
 	}
 	
 	void updatePorts() {
-		appearance.recomputePorts();
+        if (isDetailedAppearanceEnabled()) {
+            appearance.generateDetailedAppearance();
+        } else {
+            appearance.recomputePorts();
+        }
 	}
 	
 	void updatePorts(Set<Instance> adds, Set<Instance> removes,
 			Map<Instance, Instance> replaces, Collection<Instance> allPins) {
-		if (appearance.isDefaultAppearance()) {
+        if (isDetailedAppearanceEnabled()) {
+            appearance.generateDetailedAppearance();
+        } else if (appearance.isDefaultAppearance()) {
 			appearance.recomputePorts();
 		} else if (!doingUpdate) {
 			// "doingUpdate" ensures infinite recursion doesn't happen
@@ -47,8 +55,13 @@ class PortManager {
 			}
 		}
 	}
-	
-	private void performUpdate(Set<Instance> adds, Set<Instance> removes,
+
+    private static Boolean isDetailedAppearanceEnabled() {
+        Options options = Projects.getTopFrame().getProject().getOptions();
+        return options.getAttributeSet().getValue(Options.detailed_appearance_attr);
+    }
+
+    private void performUpdate(Set<Instance> adds, Set<Instance> removes,
 			Map<Instance, Instance> replaces, Collection<Instance> allPins) {
 		// Find the current objects corresponding to pins
 		Map<Instance, AppearancePort> oldObjects;

@@ -18,6 +18,7 @@ import com.cburch.logisim.circuit.Simulator;
 import com.cburch.logisim.file.LibraryEvent;
 import com.cburch.logisim.file.LibraryListener;
 import com.cburch.logisim.file.LogisimFile;
+import com.cburch.logisim.gui.appear.ActionInTransaction;
 import com.cburch.logisim.gui.appear.GenerateDetailedAppearanceAction;
 import com.cburch.logisim.gui.appear.RevertAppearanceAction;
 import com.cburch.logisim.gui.generic.CardPanel;
@@ -197,9 +198,9 @@ class MenuListener {
 			} else if (src == LogisimMenuBar.VIEW_SIMULATION) {
 				frame.setExplorerView(Frame.VIEW_SIMULATION);
 			} else if (src == LogisimMenuBar.GENERATE_DETAILED_APPEARANCE) {
-				proj.doAction(new GenerateDetailedAppearanceAction(cur));
+				proj.doAction(new ActionInTransaction(cur, new GenerateDetailedAppearanceAction(cur)));
 			} else if (src == LogisimMenuBar.REVERT_APPEARANCE) {
-				proj.doAction(new RevertAppearanceAction(cur));
+				proj.doAction(new ActionInTransaction(cur, new RevertAppearanceAction(cur)));
 			} else if (src == LogisimMenuBar.ANALYZE_CIRCUIT) {
 				ProjectCircuitActions.doAnalyze(proj, cur);
 			} else if (src == LogisimMenuBar.CIRCUIT_STATS) {

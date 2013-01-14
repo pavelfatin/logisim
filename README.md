@@ -10,3 +10,4 @@ Changes:
  * List attributes support
  * Legend in Probe component
  * Generate detailed appearance action
+ * Fixed error on "Revert to default appearance"

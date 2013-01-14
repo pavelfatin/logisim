@@ -21,7 +21,11 @@
 
 package com.cburch.logisim;
 
+import com.cburch.logisim.gui.ErrorConsole;
 import com.cburch.logisim.gui.start.Startup;
+import com.cburch.logisim.util.CompoundOutputStream;
+
+import java.io.PrintStream;
 
 public class Main {
 	public static final LogisimVersion VERSION = LogisimVersion.get(2, 7, 2);
@@ -29,7 +33,9 @@ public class Main {
 	public static final int COPYRIGHT_YEAR = 2011;
 
 	public static void main(String[] args) {
-		Startup startup = Startup.parseArgs(args);
+        System.setErr(new PrintStream(new CompoundOutputStream(System.err, new ErrorConsole())));
+
+        Startup startup = Startup.parseArgs(args);
 		if (startup == null) {
 			System.exit(0);
 		} else {

@@ -195,7 +195,8 @@ class CircuitChange {
 			return false;
 		case SET:
 			return comp.getFactory() instanceof Pin
-				&& (attr == StdAttr.WIDTH || attr == Pin.ATTR_TYPE);
+				&& (attr == StdAttr.WIDTH || attr == Pin.ATTR_TYPE ||
+                    attr == StdAttr.FACING || attr == StdAttr.LABEL);
 		default:
 			return false;
 		}

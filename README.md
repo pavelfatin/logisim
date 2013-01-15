@@ -11,3 +11,6 @@ Changes:
  * Legend in Probe component
  * Generate detailed appearance action
  * Fixed error on "Revert to default appearance"
+ * Project option: Generate detailed appearance
+ * Error reporting via a GUI console
+ * Fixed error on pin Facing / Label attribute change

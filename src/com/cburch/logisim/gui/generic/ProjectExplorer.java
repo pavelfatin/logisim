@@ -247,9 +247,15 @@ public class ProjectExplorer extends JTree implements LocaleListener {
 			int act = event.getAction();
 			if (act == ProjectEvent.ACTION_SET_TOOL) {
 				TreePath path = getSelectionPath();
-				if (path != null && path.getLastPathComponent() != event.getTool()) {
-					clearSelection();
-				}
+                if (path != null) {
+                    Object last = path.getLastPathComponent();
+                    if (last instanceof ProjectExplorerToolNode) {
+                        Tool tool = ((ProjectExplorerToolNode) last).getValue();
+                        if (tool != event.getTool()) {
+                            clearSelection();
+                        }
+                    }
+                }
 			} else if (act == ProjectEvent.ACTION_SET_CURRENT) {
 				ProjectExplorer.this.repaint();
 			}
